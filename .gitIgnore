@@ -1,0 +1,27 @@
+/tests
+/extras
+
+
+# virtual environment folders
+/venv
+/env
+/.venv
+/.env
+
+# IDE folders
+/.idea
+/.vscode
+/.vscode-testing    
+
+
+# node modules
+/node_modules   
+/.npm
+
+# build file
+/dist
+/build  
+
+
+# clean.sh file
+clean.sh
