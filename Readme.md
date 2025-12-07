@@ -1,22 +1,34 @@
-# 🌟 **ScholarSense — Your AI Co-Pilot for Opportunities, Applications, and Career Growth**
+# 🌟 ScholarSense
 
-### *Built for CodeCraze 2025 — Where Solution Meets Speed*
+**AI-Powered Application Assistant for Students**
 
----
-
-## 🚀 **Overview**
-
-**ScholarSense** is an AI-powered application co-pilot designed to help students navigate the overwhelming world of opportunities — internships, research positions, hackathons, scholarships, graduate programs, and more.
-
-Students today drown in repetitive writing, scattered application links, unclear requirements, and no centralized way to track their progress. ScholarSense solves this by combining **LLM intelligence**, **automation**, and **a clean dashboard experience** that transforms the messy application workflow into a fast, guided, personalized process.
-
-Upload your resume. Paste any opportunity. One click — and ScholarSense analyzes, matches, and helps you apply.
+*Built for CodeCraze 2025 Hackathon*
 
 ---
 
-## 🧠 **Key Features**
+## 🚀 Overview
 
-### **1. Resume Intake & Profile Builder**
+**ScholarSense** is an AI-powered application assistant that helps students find and apply to opportunities (jobs, internships, scholarships, hackathons, research positions) by analyzing their profile fit and auto-generating tailored application materials.
+
+### The Problem
+Students face overwhelming challenges when applying to opportunities:
+- **Repetitive writing** of similar emails, SOPs, and cover letters
+- **No centralized tracking** of applications across multiple platforms
+- **Unclear fit assessment** - "Should I even apply?"
+- **Time-consuming customization** for each opportunity
+
+### The Solution
+ScholarSense streamlines the entire application workflow:
+1. **Upload resume once** → Profile automatically created
+2. **Paste any opportunity** → Get instant AI fit score (0-100)
+3. **Generate materials** → Tailored emails, SOPs, bullets in seconds
+4. **Track everything** → Unified dashboard for all applications
+
+---
+
+## 🎯 Key Features
+
+### 1. Resume Intake & Profile Builder
 
 Upload your resume (PDF/DOCX) and let ScholarSense automatically extract:
 
