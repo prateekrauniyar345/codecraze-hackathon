@@ -13,9 +13,19 @@ import OpportunityDetail from './pages/OpportunityDetail'
 import AnalyzeOpportunity from './pages/AnalyzeOpportunity'
 import GenerateMaterials from './pages/GenerateMaterials'
 
-function App() {
+// auth context
+import { useAuth } from './context/AuthContext'; 
+
+
+function MainApp() {
+
+  const { user, logout, isAuthenticated } = useAuth();
+
+  console.log("user is : ", user); 
+  console.log("isAuthenticated is : ", isAuthenticated);
+
+
   return (
-    <AuthProvider>
       <Router>
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
           <Routes>
@@ -47,8 +57,16 @@ function App() {
           />
         </div>
       </Router>
-    </AuthProvider>
   )
+}
+
+
+function App(){
+    return (
+        <AuthProvider>
+            <MainApp />
+        </AuthProvider>
+    )
 }
 
 export default App

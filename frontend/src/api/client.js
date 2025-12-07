@@ -9,16 +9,33 @@ const api = axios.create({
   },
 });
 
-// Add auth token to requests
+
+
+export const setAuthHeader = (token) => {
+  if (token) {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    console.log('Auth header set with token:', token.substring(0, 20) + '...');
+  } else {
+    delete api.defaults.headers.common['Authorization'];
+    console.log('Auth header cleared');
+  }
+};
+
+// Add request interceptor to attach token from localStorage
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Request interceptor: Adding token to', config.url);
+    } else {
+      console.log('Request interceptor: No token found for', config.url);
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 // Handle auth errors
@@ -26,9 +43,23 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      console.error('401 Unauthorized error:', error.config?.url);
+      
+      // Don't redirect on auth endpoints
+      if (error.config?.url?.includes('/auth/login') || 
+          error.config?.url?.includes('/auth/register')) {
+        return Promise.reject(error);
+      }
+      
+      console.warn('Redirecting to login due to 401 error');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      setAuthHeader(null);
+      
+      // Use a slight delay to prevent race conditions
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 100000);
     }
     return Promise.reject(error);
   }
@@ -38,7 +69,11 @@ api.interceptors.response.use(
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
-  getMe: () => api.get('/auth/me'),
+  getMe: () => {
+    console.log("authAPI.getMe() called. Call stack follows:");
+    console.trace();
+    return api.get('/auth/me');
+  },
 };
 
 // Documents endpoints

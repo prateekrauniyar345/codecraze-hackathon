@@ -1,5 +1,5 @@
+import { authAPI, setAuthHeader } from '../api/client';
 import { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI } from '../api/client';
 
 const AuthContext = createContext(null);
 
@@ -16,32 +16,62 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on mount
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
+    // Initialize auth state from localStorage
+    const initializeAuth = () => {
+      const token = localStorage.getItem('token');
+      console.log("token is : ", token);
+      const savedUser = localStorage.getItem('user');
+      console.log("saved user is : ", savedUser);
+      
+      if (token && savedUser) {
+        try {
+          const parsedUser = JSON.parse(savedUser);
+          if (parsedUser) {
+            // Set header FIRST before setting user state
+            setAuthHeader(token);
+            setUser(parsedUser);
+            console.log('Auth restored from localStorage:', parsedUser.email);
+          }
+        } catch (error) {
+          console.error("Failed to parse user from localStorage", error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setAuthHeader(null);
+        }
+      }
+      setLoading(false);
+    };
     
-    if (token && savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    
-    setLoading(false);
+    initializeAuth();
   }, []);
 
   const login = async (email, password) => {
-    const response = await authAPI.login({ email, password });
-    const { access_token, user: userData } = response.data;
-    
-    console.log('Login response:', response.data); // Debug
-    console.log('Token:', access_token); // Debug
-    console.log('User:', userData); // Debug
-    
-    localStorage.setItem('token', access_token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
-    
-    console.log('User state set to:', userData); // Debug
-    
-    return userData;
+    try {
+      const response = await authAPI.login({ email, password });
+      console.log("login responss is : ", response);
+      const { access_token, user: userData } = response.data;
+      
+      console.log('Login successful for:', userData.email);
+      
+      if (access_token && userData) {
+        // CRITICAL: Set auth header BEFORE updating state
+        // This ensures subsequent API calls have the token
+        setAuthHeader(access_token);
+        localStorage.setItem('token', access_token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // Set user state last
+        setUser(userData);
+        
+        return userData;
+      } else {
+        console.error("Login response missing token or user data", response.data);
+        throw new Error("Login failed: Invalid response from server.");
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   };
 
   const register = async (email, password, fullName) => {
@@ -52,14 +82,20 @@ export const AuthProvider = ({ children }) => {
     });
     const { access_token, user: userData } = response.data;
     
-    localStorage.setItem('token', access_token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
-    
-    return userData;
+    if (access_token && userData) {
+      setAuthHeader(access_token);
+      localStorage.setItem('token', access_token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+      return userData;
+    } else {
+      console.error("Register response missing token or user data", response.data);
+      throw new Error("Registration failed: Invalid response from server.");
+    }
   };
 
   const logout = () => {
+    setAuthHeader(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);

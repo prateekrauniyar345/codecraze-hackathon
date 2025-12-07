@@ -38,3 +38,6 @@ instruction.md
 # any files starting with temp or ._
 temp*
 ._*
+
+# log files
+*.log

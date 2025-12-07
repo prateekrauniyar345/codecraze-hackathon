@@ -25,8 +25,13 @@ const Login = () => {
     try {
       await login(email, password);
       toast.success('Login successful!');
-      navigate('/dashboard', { replace: true });
+      
+      // Small delay to ensure state updates propagate
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 100);
     } catch (error) {
+      console.error('Login error:', error);
       toast.error(error.response?.data?.detail || 'Login failed');
     } finally {
       setLoading(false);

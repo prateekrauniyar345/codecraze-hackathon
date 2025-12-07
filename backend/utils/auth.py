@@ -1,6 +1,7 @@
 """
 Authentication utilities for JWT token generation and password hashing.
 """
+import logging
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
@@ -13,6 +14,7 @@ from database import get_db
 from models.user import User
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -68,13 +70,18 @@ def decode_access_token(token: str) -> dict:
     Raises:
         HTTPException: If token is invalid
     """
+    # Diagnostic logging
+    logger.debug(f"Decoding token with algorithm: {settings.ALGORITHM}")
+    logger.debug(f"Secret key type: {type(settings.SECRET_KEY)}, length: {len(settings.SECRET_KEY)}")
+
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
-    except JWTError:
+    except JWTError as e:
+        logger.error(f"JWT Decoding Error: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
+            detail="Could not validate credentials (token may be invalid or expired)",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -97,25 +104,38 @@ async def get_current_user(
         HTTPException: If authentication fails
     """
     token = credentials.credentials
-    payload = decode_access_token(token)
-    
-    user_id: int = payload.get("sub")
-    if user_id is None:
+    try:
+        payload = decode_access_token(token)
+        
+        user_id: int = payload.get("sub")
+        if user_id is None:
+            logger.warning("Token payload missing 'sub' claim.")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        user = db.query(User).filter(User.id == user_id).first()
+        if user is None:
+            logger.warning(f"User with ID '{user_id}' from token not found in database.")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        return user
+    except HTTPException as e:
+        # Re-raise HTTPExceptions to preserve their status code and detail
+        raise e
+    except Exception as e:
+        logger.error(f"An unexpected error occurred in get_current_user: {e}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while authenticating.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    user = db.query(User).filter(User.id == user_id).first()
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    return user
 
 
 def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
