@@ -1,7 +1,7 @@
 """
 Document router for file uploads and text extraction.
 """
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List
 from database import get_db
@@ -21,33 +21,46 @@ router = APIRouter(prefix="/documents", tags=["Documents"])
 @router.post("/upload", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
 async def upload_document(
     file: UploadFile = File(...),
-    doc_type: str = "resume",
+    doc_type: str = Query("resume"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Upload a document (resume/CV)."""
+
+    print("file received:", file.filename, "of type", doc_type)
+    print("current user is : ", current_user.email)
+    
     # Validate file
     validate_file(file)
     
     # Save file
     file_path, file_size = await save_upload_file(file, current_user.id)
+    print("\n\nfile_path", file_path)
+    print("\n\nfile_size", file_size)
     
+    print("====================1")
     # Create document record
     document = Document(
         user_id=current_user.id,
         filename=file.filename,
         file_path=file_path,
         file_size=file_size,
-        doc_type=DocumentType(doc_type)
+        doc_type=doc_type  # Use the string directly, not the enum
     )
+    print("====================2")
     
     db.add(document)
+    print("====================3")
     db.commit()
+    print("====================4")
     db.refresh(document)
+    print("====================5")
     
     # Extract text in background (for now, do it synchronously)
     try:
         extracted_text, method = extract_text_from_file(file_path)
+        print("\n\nextracted_text", extracted_text)
+        print("\n\nmethod", method)
         
         document_text = DocumentText(
             document_id=document.id,

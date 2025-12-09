@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiHome, FiUpload, FiBriefcase, FiLogOut, FiSearch, FiFileText } from 'react-icons/fi';
+import { FiHome, FiUpload, FiBriefcase, FiLogOut, FiSearch, FiFileText, FiUser, FiSettings } from 'react-icons/fi';
 
 const Layout = () => {
   const { user, logout } = useAuth();
@@ -17,6 +17,8 @@ const Layout = () => {
     { path: '/upload', icon: FiUpload, label: 'Upload Resume' },
     { path: '/opportunities', icon: FiBriefcase, label: 'Opportunities' },
     { path: '/analyze', icon: FiSearch, label: 'Analyze' },
+    { path: '/profile', icon: FiUser, label: 'Profile' },
+    { path: '/settings', icon: FiSettings, label: 'Settings' },
   ];
 
   return (

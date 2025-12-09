@@ -4,9 +4,8 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // Don't set default Content-Type - let axios handle it automatically
+  // JSON requests will get application/json, FormData will get multipart/form-data
 });
 
 
@@ -25,12 +24,20 @@ export const setAuthHeader = (token) => {
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    console.log("token in client.js is : ", token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log('Request interceptor: Adding token to', config.url);
     } else {
       console.log('Request interceptor: No token found for', config.url);
     }
+    
+    // Set Content-Type to application/json for non-FormData requests
+    if (!(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
+    }
+    // For FormData, axios will automatically set Content-Type with boundary
+    
     return config;
   },
   (error) => {
@@ -79,11 +86,22 @@ export const authAPI = {
 // Documents endpoints
 export const documentsAPI = {
   upload: (file, docType = 'resume') => {
+    console.log('Uploading file:', file); // Log the actual file object
+    console.log('File details:', {
+      name: file?.name,
+      size: file?.size,
+      type: file?.type
+    });
+    
     const formData = new FormData();
     formData.append('file', file);
-    return api.post(`/documents/upload?doc_type=${docType}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    
+    // Log FormData entries
+    for (let pair of formData.entries()) {
+      console.log('FormData entry:', pair[0], pair[1]);
+    }
+    
+    return api.post(`/documents/upload?doc_type=${docType}`, formData);
   },
   list: () => api.get('/documents/'),
   get: (id) => api.get(`/documents/${id}`),

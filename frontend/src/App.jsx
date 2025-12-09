@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { AuthProvider } from './context/AuthContext'
+import { ThemeProvider, useTheme } from './context/ThemeContext'
 import PrivateRoute from './components/PrivateRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
@@ -12,6 +13,8 @@ import Opportunities from './pages/Opportunities'
 import OpportunityDetail from './pages/OpportunityDetail'
 import AnalyzeOpportunity from './pages/AnalyzeOpportunity'
 import GenerateMaterials from './pages/GenerateMaterials'
+import Profile from './pages/Profile'
+import Settings from './pages/Settings'
 
 // auth context
 import { useAuth } from './context/AuthContext'; 
@@ -20,6 +23,7 @@ import { useAuth } from './context/AuthContext';
 function MainApp() {
 
   const { user, logout, isAuthenticated } = useAuth();
+  const { theme } = useTheme();
 
   console.log("user is : ", user); 
   console.log("isAuthenticated is : ", isAuthenticated);
@@ -27,7 +31,7 @@ function MainApp() {
 
   return (
       <Router>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -40,6 +44,8 @@ function MainApp() {
               <Route path="opportunities/:id" element={<OpportunityDetail />} />
               <Route path="analyze" element={<AnalyzeOpportunity />} />
               <Route path="generate/:opportunityId" element={<GenerateMaterials />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="settings" element={<Settings />} />
             </Route>
           </Routes>
           
@@ -53,7 +59,7 @@ function MainApp() {
             pauseOnFocusLoss
             draggable
             pauseOnHover
-            theme="light"
+            theme={theme}
           />
         </div>
       </Router>
@@ -63,9 +69,11 @@ function MainApp() {
 
 function App(){
     return (
-        <AuthProvider>
-            <MainApp />
-        </AuthProvider>
+        <ThemeProvider>
+            <AuthProvider>
+                <MainApp />
+            </AuthProvider>
+        </ThemeProvider>
     )
 }
 

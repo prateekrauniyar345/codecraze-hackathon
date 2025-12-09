@@ -32,6 +32,7 @@ const Upload = () => {
     setUploading(true);
     try {
       const response = await documentsAPI.upload(file, 'resume');
+      console.log("Upload response is : ", response); 
       const docId = response.data.id;
       setDocumentId(docId);
       toast.success('Resume uploaded successfully!');
