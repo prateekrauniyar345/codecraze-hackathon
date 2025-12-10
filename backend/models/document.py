@@ -12,6 +12,7 @@ class DocumentType(str, enum.Enum):
     """Document type enumeration."""
     RESUME = "resume"
     CV = "cv"
+    RESEARCH_PAPER = "research_paper"
     OTHER = "other"
 
 
