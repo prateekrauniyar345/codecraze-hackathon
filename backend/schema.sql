@@ -11,7 +11,7 @@ DROP TABLE IF EXISTS documents CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
 -- Create enum types
-CREATE TYPE document_type AS ENUM ('resume', 'cv', 'other');
+CREATE TYPE document_type AS ENUM ('resume', 'cv', 'research_paper', 'project_information', 'cover_letter', 'other');
 CREATE TYPE opportunity_status AS ENUM ('TO_APPLY', 'APPLIED', 'INTERVIEW', 'OFFER', 'REJECTED');
 CREATE TYPE material_type AS ENUM ('email', 'subject_line', 'sop_paragraph', 'fit_bullets');
 
@@ -52,11 +52,21 @@ CREATE TABLE profiles (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     document_id INTEGER REFERENCES documents(id) ON DELETE SET NULL,
+    full_name VARCHAR(255),
+    email VARCHAR(255),
+    phone_number VARCHAR(50),
+    linkedin_url VARCHAR(512),
+    github_url VARCHAR(512),
+    personal_website_url VARCHAR(512),
+    summary TEXT,
     full_text TEXT NOT NULL,
     skills JSONB DEFAULT '[]',
     education JSONB DEFAULT '[]',
     experience JSONB DEFAULT '[]',
     projects JSONB DEFAULT '[]',
+    languages JSONB DEFAULT '[]',
+    certifications JSONB DEFAULT '[]',
+    awards JSONB DEFAULT '[]',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_profile_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

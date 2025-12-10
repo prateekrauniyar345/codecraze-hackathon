@@ -14,7 +14,7 @@ const Layout = () => {
 
   const navItems = [
     { path: '/dashboard', icon: FiHome, label: 'Dashboard' },
-    { path: '/upload', icon: FiUpload, label: 'Upload Resume' },
+    { path: '/upload', icon: FiUpload, label: 'Upload Documents' },
     { path: '/opportunities', icon: FiBriefcase, label: 'Opportunities' },
     { path: '/analyze', icon: FiSearch, label: 'Analyze' },
     { path: '/profile', icon: FiUser, label: 'Profile' },

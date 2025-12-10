@@ -86,22 +86,11 @@ export const authAPI = {
 // Documents endpoints
 export const documentsAPI = {
   upload: (file, docType = 'resume') => {
-    console.log('Uploading file:', file); // Log the actual file object
-    console.log('File details:', {
-      name: file?.name,
-      size: file?.size,
-      type: file?.type
-    });
-    
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('doc_type', docType);
     
-    // Log FormData entries
-    for (let pair of formData.entries()) {
-      console.log('FormData entry:', pair[0], pair[1]);
-    }
-    
-    return api.post(`/documents/upload?doc_type=${docType}`, formData);
+    return api.post('/documents/upload', formData);
   },
   list: () => api.get('/documents/'),
   get: (id) => api.get(`/documents/${id}`),

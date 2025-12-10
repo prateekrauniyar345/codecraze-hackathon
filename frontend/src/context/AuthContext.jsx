@@ -80,18 +80,19 @@ export const AuthProvider = ({ children }) => {
       password,
       full_name: fullName,
     });
-    const { access_token, user: userData } = response.data;
+    // const { access_token, user: userData } = response.data;
     
-    if (access_token && userData) {
-      setAuthHeader(access_token);
-      localStorage.setItem('token', access_token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-      return userData;
-    } else {
-      console.error("Register response missing token or user data", response.data);
-      throw new Error("Registration failed: Invalid response from server.");
-    }
+    // if (access_token && userData) {
+    //   setAuthHeader(access_token);
+    //   localStorage.setItem('token', access_token);
+    //   localStorage.setItem('user', JSON.stringify(userData));
+    //   setUser(userData);
+    //   return userData;
+    // } else {
+    //   console.error("Register response missing token or user data", response.data);
+    //   throw new Error("Registration failed: Invalid response from server.");
+    // }
+    return response.data;
   };
 
   const logout = () => {

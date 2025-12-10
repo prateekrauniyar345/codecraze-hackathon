@@ -19,20 +19,22 @@ const Register = () => {
     }
   }, [isAuthenticated, navigate]);
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       await register(email, password, fullName);
-      toast.success('Registration successful!');
-      navigate('/dashboard', { replace: true });
+      toast.success('Registration successful! Please log in.');
+      navigate('/login', { replace: true });  // ✅ now this makes sense
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Registration failed');
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">

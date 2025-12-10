@@ -1,13 +1,15 @@
 """
 Document router for file uploads and text extraction.
 """
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Query
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from database import get_db
 from models.user import User
-from models.document import Document, DocumentText, DocumentType
+from models.document import Document, DocumentText
+from models.profile import Profile
 from schemas.document import DocumentResponse, DocumentTextResponse
+from services.llm_service import llm_service
 from utils.auth import get_current_user
 from utils.file_utils import (
     validate_file,
@@ -21,59 +23,71 @@ router = APIRouter(prefix="/documents", tags=["Documents"])
 @router.post("/upload", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
 async def upload_document(
     file: UploadFile = File(...),
-    doc_type: str = Query("resume"),
+    doc_type: str = File(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Upload a document (resume/CV)."""
-
-    print("file received:", file.filename, "of type", doc_type)
-    print("current user is : ", current_user.email)
-    
-    # Validate file
+    """
+    Upload a document. 
+    If the document is a resume, it extracts profile information and updates the user's profile.
+    """
     validate_file(file)
     
-    # Save file
     file_path, file_size = await save_upload_file(file, current_user.id)
-    print("\n\nfile_path", file_path)
-    print("\n\nfile_size", file_size)
     
-    print("====================1")
-    # Create document record
     document = Document(
         user_id=current_user.id,
         filename=file.filename,
         file_path=file_path,
         file_size=file_size,
-        doc_type=doc_type  # Use the string directly, not the enum
+        doc_type=doc_type
     )
-    print("====================2")
-    
     db.add(document)
-    print("====================3")
     db.commit()
-    print("====================4")
     db.refresh(document)
-    print("====================5")
     
-    # Extract text in background (for now, do it synchronously)
     try:
         extracted_text, method = extract_text_from_file(file_path)
-        print("\n\nextracted_text", extracted_text)
-        print("\n\nmethod", method)
         
         document_text = DocumentText(
             document_id=document.id,
             extracted_text=extracted_text,
             extraction_method=method
         )
-        
         db.add(document_text)
         db.commit()
+
+        if doc_type == 'resume' and extracted_text:
+            # Use LLM to extract profile data
+            profile_data = await llm_service.extract_profile_from_text(extracted_text)
+            
+            # Check if a profile exists for the user
+            user_profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
+            
+            if user_profile:
+                # Update existing profile
+                update_data = profile_data.dict(exclude_unset=True)
+                for key, value in update_data.items():
+                    setattr(user_profile, key, value)
+                user_profile.document_id = document.id
+                user_profile.full_text = extracted_text
+            else:
+                # Create new profile
+                user_profile = Profile(
+                    **profile_data.dict(),
+                    user_id=current_user.id,
+                    document_id=document.id,
+                    full_text=extracted_text
+                )
+                db.add(user_profile)
+            
+            db.commit()
+
     except Exception as e:
-        # Log error but don't fail the upload
-        print(f"Text extraction failed: {str(e)}")
-    
+        # In a production environment, you'd want to log this error more robustly.
+        # For now, we'll just print it to the console but not fail the whole upload.
+        print(f"Error during post-upload processing: {str(e)}")
+
     return DocumentResponse.from_orm(document)
 
 
