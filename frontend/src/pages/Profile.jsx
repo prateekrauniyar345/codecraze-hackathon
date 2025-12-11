@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { profilesAPI } from '../api/client';
 import { toast } from 'react-toastify';
 import { FiUser, FiBriefcase, FiBook, FiPlus, FiEdit2, FiTrash2, FiSave, FiX } from 'react-icons/fi';
+import { Accordion } from 'react-bootstrap';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -23,6 +24,9 @@ const Profile = () => {
     projects: { name: '', description: '', technologies: '', link: '', startDate: '', endDate: '' }
   });
 
+  // accordian state for experience section
+  const [openExpIndex, setOpenExpIndex] = useState(null);
+
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -30,8 +34,9 @@ const Profile = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const data = await profilesAPI.getLatest();
-      setProfile(data);
+      const res = await profilesAPI.getLatest(); // this is the Axios response
+      console.log("data fetched for profile is : ", res);
+      setProfile(res.data); // store just the profile object
     } catch (error) {
       if (error.response?.status === 404) {
         toast.info('No profile found. Upload a resume to create one!');
@@ -41,7 +46,8 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  };
+};
+
 
   const handleAddSkill = async () => {
     if (!newSkill.trim()) return;
@@ -175,7 +181,7 @@ const Profile = () => {
             <span className="font-medium">Name:</span> {user?.full_name || 'Not provided'}
           </p>
           <p className="text-gray-700 dark:text-gray-300">
-            <span className="font-medium">Profile Created:</span> {new Date(profile.created_at).toLocaleDateString()}
+            <span className="font-medium">Profile Created:</span> {profile && new Date(profile.created_at).toLocaleDateString()}
           </p>
         </div>
       </div>
@@ -245,6 +251,7 @@ const Profile = () => {
             <FiBriefcase className="h-6 w-6 text-primary-600 mr-2" />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Experience</h2>
           </div>
+          {/* button to add new experience */}
           <button
             onClick={() => setEditMode(prev => ({ ...prev, experience: !prev.experience }))}
             className="text-primary-600 hover:text-primary-700 dark:text-primary-400"
@@ -253,6 +260,8 @@ const Profile = () => {
           </button>
         </div>
 
+
+        {/* this is for adding new experience - the fields */}
         {editMode.experience && (
           <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
             <input
@@ -326,36 +335,64 @@ const Profile = () => {
           </div>
         )}
 
+        {/* display all the experiences */}
         <div className="space-y-4">
           {profile.experience?.length > 0 ? (
-            profile.experience.map((exp, index) => (
-              <div key={index} className="border-l-4 border-primary-500 pl-4 py-2">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{exp.position}</h3>
-                    <p className="text-primary-600 dark:text-primary-400">{exp.company}</p>
-                    {exp.location && <p className="text-sm text-gray-600 dark:text-gray-400">{exp.location}</p>}
-                    {(exp.startDate || exp.endDate) && (
-                      <p className="text-sm text-gray-500 dark:text-gray-500">
-                        {exp.startDate} - {exp.endDate}
-                      </p>
-                    )}
-                    {exp.description && (
-                      <p className="mt-2 text-gray-700 dark:text-gray-300">{exp.description}</p>
+              profile.experience.map((exp, index) => {
+                const isOpen = openExpIndex === index;
+                const headerLabel = `${exp.position} • ${exp.company} • ${exp.start_date || exp.startDate || ''} - ${exp.end_date || exp.endDate || exp.end_date || ''}`;
+
+                return (
+                  <div key={index} className="border-l-4 border-primary-500 pl-4 py-2">
+                    <button
+                      type="button"
+                      onClick={() => setOpenExpIndex(isOpen ? null : index)}
+                      aria-expanded={isOpen}
+                      className="w-full flex justify-between items-center text-left focus:outline-none"
+                    >
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{exp.position}</h3>
+                        <p className="text-primary-600 dark:text-primary-400">{exp.company}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {exp.start_date || exp.startDate || ''} {exp.end_date || exp.endDate || '' ? ` - ${exp.end_date || exp.endDate || exp.end_date}` : ''}
+                        </p>
+                      </div>
+
+                      <div className="ml-4 flex items-center gap-3">
+                        {(exp.location) && <span className="text-sm text-gray-600 dark:text-gray-400">{exp.location}</span>}
+                        <svg
+                          className={`h-5 w-5 transform transition-transform duration-200 ${isOpen ? 'rotate-180' : 'rotate-0'}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                      </div>
+                    </button>
+
+                    {isOpen && (
+                      <div className="mt-3 pl-2 text-gray-700 dark:text-gray-300">
+                        {exp.responsibilities && exp.responsibilities.length > 0 ? (
+                          <ul className="list-disc pl-5 space-y-2">
+                            {exp.responsibilities.map((r, i) => (
+                              <li key={i}>{r}</li>
+                            ))}
+                          </ul>
+                        ) : exp.description ? (
+                          <p className="whitespace-pre-wrap">{exp.description}</p>
+                        ) : (
+                          <p className="text-sm text-gray-500 dark:text-gray-400">No details provided.</p>
+                        )}
+                      </div>
                     )}
                   </div>
-                  <button
-                    onClick={() => handleRemoveItem('experience', index)}
-                    className="text-red-600 hover:text-red-800 dark:text-red-400"
-                  >
-                    <FiTrash2 className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-500 dark:text-gray-400">No experience added yet</p>
-          )}
+                );
+              })
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400">No experience added yet</p>
+            )}
         </div>
       </div>
 

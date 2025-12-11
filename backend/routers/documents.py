@@ -64,24 +64,34 @@ async def upload_document(
         if doc_type == 'resume' and extracted_text:
             # Use LLM to extract profile data
             profile_data = await llm_service.extract_profile_from_text(extracted_text)
-            
+            print("extracted profile data: ", profile_data)
             # Check if a profile exists for the user
             user_profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
-            
+            print("existing user profile: ", user_profile)
+
             if user_profile:
-                # Update existing profile
-                update_data = profile_data.dict(exclude_unset=True)
+                # Update existing profile (ignore full_text from LLM)
+                update_data = profile_data.dict(
+                    exclude_unset=True,
+                    exclude={"full_text"}
+                )
+                print("update data for profile: ", update_data)
                 for key, value in update_data.items():
                     setattr(user_profile, key, value)
+                # Always use our extracted_text, not whatever the LLM might say
                 user_profile.document_id = document.id
                 user_profile.full_text = extracted_text
             else:
-                # Create new profile
+                # Create new profile, ignore full_text from LLM data
+                base_data = profile_data.dict(
+                    exclude_unset=True,
+                    exclude={"full_text"}
+                )
                 user_profile = Profile(
-                    **profile_data.dict(),
+                    **base_data,
                     user_id=current_user.id,
                     document_id=document.id,
-                    full_text=extracted_text
+                    full_text=extracted_text,  # always from our extraction
                 )
                 db.add(user_profile)
             

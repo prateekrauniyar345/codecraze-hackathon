@@ -100,6 +100,8 @@ async def get_latest_profile(
     profile = db.query(Profile).filter(
         Profile.user_id == current_user.id
     ).order_by(Profile.created_at.desc()).first()
+
+    print("latest profile: ", profile)
     
     if not profile:
         raise HTTPException(

@@ -6,7 +6,7 @@ from typing import Dict, Any
 
 from services.llm_client import llm_client
 from schemas.profile import ProfileUpdate
-
+from pydantic import ValidationError
 
 class LLMService:
     """
@@ -62,19 +62,27 @@ class LLMService:
                 json_mode=True
             )
             
-            # The response should be a JSON string, so we parse it.
+            print("\n=== RAW LLM RESPONSE TEXT ===")
+            print(response_text)
+            print("=== END RAW LLM RESPONSE ===\n")
+
             extracted_data = json.loads(response_text)
-            
-            # We use Pydantic to validate and structure the data.
-            # This ensures that the data we return is in the correct format.
+
+            print("\n=== PARSED JSON ===")
+            print(extracted_data)
+            print("=== END PARSED JSON ===\n")
+
             profile_update = ProfileUpdate(**extracted_data)
-            
             return profile_update
-            
+
         except json.JSONDecodeError as e:
+            print("JSONDecodeError while parsing LLM response:", e)
             raise Exception(f"Failed to parse LLM JSON response: {str(e)}")
+        except ValidationError as e:
+            print("ValidationError in ProfileUpdate:", e)
+            raise Exception(f"Profile extraction validation failed: {str(e)}")
         except Exception as e:
-            # This will catch validation errors from Pydantic as well.
+            print("Generic error in extract_profile_from_text:", e)
             raise Exception(f"Profile extraction failed: {str(e)}")
 
 # Global LLM service instance
