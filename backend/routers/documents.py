@@ -1,7 +1,7 @@
 """
 Document router for file uploads and text extraction.
 """
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form
 from sqlalchemy.orm import Session
 from typing import List
 from database import get_db
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/documents", tags=["Documents"])
 @router.post("/upload", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
 async def upload_document(
     file: UploadFile = File(...),
-    doc_type: str = File(...),
+    doc_type: str = Form(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -31,6 +31,10 @@ async def upload_document(
     Upload a document. 
     If the document is a resume, it extracts profile information and updates the user's profile.
     """
+    print("uploaded file is : ", file)
+    print("document type is : ", doc_type)
+    print("current user is : ", current_user)
+
     validate_file(file)
     
     file_path, file_size = await save_upload_file(file, current_user.id)

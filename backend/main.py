@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import get_settings
 from database import init_db
 from logging_config import setup_logging
-from routers import auth, documents, profiles, opportunities, materials
+from routers import auth, documents, profiles, opportunities, materials, llm_health_check
 
 # Setup logging
 setup_logging()
@@ -68,6 +68,7 @@ app.include_router(documents.router)
 app.include_router(profiles.router)
 app.include_router(opportunities.router)
 app.include_router(materials.router)
+app.include_router(llm_health_check.router)
 
 
 # --- Lifespan Events ---
@@ -91,7 +92,7 @@ async def root():
     }
 
 
-@app.get("/health")
+@app.get("/app-health")
 async def health_check():
     """Health check endpoint."""
     return {"status": "healthy"}

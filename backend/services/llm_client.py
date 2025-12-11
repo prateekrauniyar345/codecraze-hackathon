@@ -27,6 +27,7 @@ class LLMClient:
         
     def _get_headers(self) -> Dict[str, str]:
         """Get headers for API requests."""
+        print("llm client api key is : ", self.api_key)
         return {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
@@ -137,36 +138,36 @@ class LLMClient:
             Dictionary with fit_score and fit_analysis
         """
         system_prompt = """You are an expert career advisor and application strategist. 
-Analyze the fit between a candidate's profile and an opportunity.
-You must respond with valid JSON only, following this exact structure:
-{
-  "fit_score": <integer 0-100>,
-  "fit_analysis": {
-    "overall_fit": <integer 0-100>,
-    "strengths": [<list of specific matching qualifications>],
-    "gaps": [<list of missing qualifications or weaknesses>],
-    "recommendations": [<list of strategic recommendations for the application>]
-  },
-  "extracted_requirements": [
-    {
-      "requirement_text": "<requirement>",
-      "requirement_type": "<type: education|technical|experience|other>",
-      "is_mandatory": <boolean>
-    }
-  ]
-}
+                            Analyze the fit between a candidate's profile and an opportunity.
+                            You must respond with valid JSON only, following this exact structure:
+                            {
+                            "fit_score": <integer 0-100>,
+                            "fit_analysis": {
+                                "overall_fit": <integer 0-100>,
+                                "strengths": [<list of specific matching qualifications>],
+                                "gaps": [<list of missing qualifications or weaknesses>],
+                                "recommendations": [<list of strategic recommendations for the application>]
+                            },
+                            "extracted_requirements": [
+                                {
+                                "requirement_text": "<requirement>",
+                                "requirement_type": "<type: education|technical|experience|other>",
+                                "is_mandatory": <boolean>
+                                }
+                            ]
+                            }
 
-Be specific and reference actual details from both texts. Fit score should be realistic and well-calibrated."""
+                            Be specific and reference actual details from both texts. Fit score should be realistic and well-calibrated."""
 
         prompt = f"""Analyze the fit between this candidate profile and opportunity.
 
-CANDIDATE PROFILE:
-{profile_text}
+                    CANDIDATE PROFILE:
+                    {profile_text}
 
-OPPORTUNITY:
-{opportunity_text}
+                    OPPORTUNITY:
+                    {opportunity_text}
 
-Provide detailed analysis in JSON format as specified."""
+                    Provide detailed analysis in JSON format as specified."""
 
         try:
             response_text = await self.generate_completion(
@@ -209,28 +210,28 @@ Provide detailed analysis in JSON format as specified."""
             Generated email text
         """
         system_prompt = """You are an expert at writing compelling cold emails for job/internship applications.
-Write professional, personalized emails that highlight the candidate's relevant experience and fit.
-Keep emails concise (200-300 words), engaging, and action-oriented."""
+                            Write professional, personalized emails that highlight the candidate's relevant experience and fit.
+                            Keep emails concise (200-300 words), engaging, and action-oriented."""
 
         prompt = f"""Write a cold email for this opportunity based on the candidate's profile.
 
-CANDIDATE PROFILE:
-{profile_text}
+                    CANDIDATE PROFILE:
+                    {profile_text}
 
-OPPORTUNITY:
-{opportunity_text}
+                    OPPORTUNITY:
+                    {opportunity_text}
 
-FIT ANALYSIS:
-{json.dumps(fit_analysis, indent=2)}
+                    FIT ANALYSIS:
+                    {json.dumps(fit_analysis, indent=2)}
 
-Write a compelling cold email that:
-1. Opens with a strong hook
-2. Highlights 2-3 most relevant qualifications
-3. Shows genuine interest and cultural fit
-4. Includes a clear call to action
-5. Maintains professional tone
+                    Write a compelling cold email that:
+                    1. Opens with a strong hook
+                    2. Highlights 2-3 most relevant qualifications
+                    3. Shows genuine interest and cultural fit
+                    4. Includes a clear call to action
+                    5. Maintains professional tone
 
-Do not include subject line. Just the email body."""
+                    Do not include subject line. Just the email body."""
 
         return await self.generate_completion(
             prompt=prompt,
@@ -246,22 +247,24 @@ Do not include subject line. Just the email body."""
     ) -> str:
         """Generate an email subject line."""
         system_prompt = """You are an expert at writing attention-grabbing email subject lines.
-Create subject lines that are professional, specific, and highlight key qualifications."""
+                            Create subject lines that are professional, specific, and highlight key qualifications.
+                        """
 
         prompt = f"""Create a compelling subject line for a cold email application.
 
-CANDIDATE PROFILE:
-{profile_text}
+                    CANDIDATE PROFILE:
+                    {profile_text}
 
-OPPORTUNITY:
-{opportunity_text}
+                    OPPORTUNITY:
+                    {opportunity_text}
 
-Write ONE subject line (max 80 characters) that:
-- Mentions the position/opportunity
-- Includes candidate name or key qualification
-- Creates interest without being clickbait
+                    Write ONE subject line (max 80 characters) that:
+                    - Mentions the position/opportunity
+                    - Includes candidate name or key qualification
+                    - Creates interest without being clickbait
 
-Just return the subject line text, nothing else."""
+                    Just return the subject line text, nothing else.
+                """
 
         return await self.generate_completion(
             prompt=prompt,
@@ -278,26 +281,28 @@ Just return the subject line text, nothing else."""
     ) -> str:
         """Generate a statement of purpose paragraph."""
         system_prompt = """You are an expert at writing compelling SOP paragraphs for academic and professional applications.
-Write focused paragraphs that connect the candidate's experience to the opportunity's goals."""
+                            Write focused paragraphs that connect the candidate's experience to the opportunity's goals.
+                        """
 
         prompt = f"""Write a strong Statement of Purpose paragraph for this opportunity.
 
-CANDIDATE PROFILE:
-{profile_text}
+                    CANDIDATE PROFILE:
+                    {profile_text}
 
-OPPORTUNITY:
-{opportunity_text}
+                    OPPORTUNITY:
+                    {opportunity_text}
 
-FIT ANALYSIS:
-{json.dumps(fit_analysis, indent=2)}
+                    FIT ANALYSIS:
+                    {json.dumps(fit_analysis, indent=2)}
 
-Write ONE well-structured paragraph (150-200 words) that:
-1. Connects candidate's experience to opportunity
-2. Demonstrates specific knowledge/interest in the organization
-3. Highlights unique value proposition
-4. Shows alignment with goals
+                    Write ONE well-structured paragraph (150-200 words) that:
+                    1. Connects candidate's experience to opportunity
+                    2. Demonstrates specific knowledge/interest in the organization
+                    3. Highlights unique value proposition
+                    4. Shows alignment with goals
 
-Return only the paragraph text."""
+                    Return only the paragraph text.
+                """
 
         return await self.generate_completion(
             prompt=prompt,
@@ -314,29 +319,31 @@ Return only the paragraph text."""
     ) -> str:
         """Generate bullet points highlighting fit."""
         system_prompt = """You are an expert at writing impactful bullet points for resumes and applications.
-Create bullets that are specific, quantified when possible, and directly address requirements."""
+                            Create bullets that are specific, quantified when possible, and directly address requirements.
+                        """
 
         prompt = f"""Create bullet points highlighting the candidate's fit for this opportunity.
 
-CANDIDATE PROFILE:
-{profile_text}
+                    CANDIDATE PROFILE:
+                    {profile_text}
 
-OPPORTUNITY:
-{opportunity_text}
+                    OPPORTUNITY:
+                    {opportunity_text}
 
-FIT ANALYSIS:
-{json.dumps(fit_analysis, indent=2)}
+                    FIT ANALYSIS:
+                    {json.dumps(fit_analysis, indent=2)}
 
-Write 4-5 bullet points that:
-- Start with strong action verbs
-- Include specific achievements and impacts
-- Directly address key requirements
-- Are concise and scannable
+                    Write 4-5 bullet points that:
+                    - Start with strong action verbs
+                    - Include specific achievements and impacts
+                    - Directly address key requirements
+                    - Are concise and scannable
 
-Return bullets in this format:
-• First bullet point
-• Second bullet point
-etc."""
+                    Return bullets in this format:
+                    • First bullet point
+                    • Second bullet point
+                    etc.
+                """
 
         return await self.generate_completion(
             prompt=prompt,

@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     
     # LLM Configuration
-    LLM_MODEL: str = "anthropic/claude-3.5-sonnet"
+    LLM_MODEL: str = "openai/gpt-oss-120b"
     LLM_TIMEOUT: int = 60
     LLM_MAX_RETRIES: int = 3
     

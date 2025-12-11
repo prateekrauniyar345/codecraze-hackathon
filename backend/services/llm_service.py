@@ -27,31 +27,31 @@ class LLMService:
             A ProfileUpdate schema object populated with the extracted data.
         """
         system_prompt = """You are an expert HR assistant specializing in parsing resumes. 
-Your task is to extract structured information from the provided resume text and return it as a valid JSON object.
-Follow these rules precisely:
-1.  **Extract all possible information.** If a field is not present in the resume, omit it from the JSON output.
-2.  **Format fields correctly:**
-    *   `full_name`: string
-    *   `email`: string (must be a valid email format)
-    *   `phone_number`: string
-    *   `linkedin_url`: string (must be a valid URL)
-    *   `github_url`: string (must be a valid URL)
-    *   `personal_website_url`: string (must be a valid URL)
-    *   `summary`: string (a professional summary or objective)
-    *   `skills`: array of strings
-    *   `education`: array of objects, each with `institution`, `degree`, `start_date`, `end_date`, and `gpa`.
-    *   `experience`: array of objects, each with `company`, `position`, `start_date`, `end_date`, and `responsibilities` (an array of strings).
-    *   `projects`: array of objects, each with `name`, `description`, and `technologies` (an array of strings).
-    *   `languages`: array of objects, each with `language` and `proficiency`.
-    *   `certifications`: array of objects, each with `name`, `issuing_organization`, and `date_issued`.
-    *   `awards`: array of objects, each with `name`, `issuing_organization`, and `date_awarded`.
-3.  **Return only the JSON object.** Do not include any other text, comments, or explanations.
-"""
+                            Your task is to extract structured information from the provided resume text and return it as a valid JSON object.
+                            Follow these rules precisely:
+                            1.  **Extract all possible information.** If a field is not present in the resume, omit it from the JSON output.
+                            2.  **Format fields correctly:**
+                                *   `full_name`: string
+                                *   `email`: string (must be a valid email format)
+                                *   `phone_number`: string
+                                *   `linkedin_url`: string (must be a valid URL)
+                                *   `github_url`: string (must be a valid URL)
+                                *   `personal_website_url`: string (must be a valid URL)
+                                *   `summary`: string (a professional summary or objective)
+                                *   `skills`: array of strings
+                                *   `education`: array of objects, each with `institution`, `degree`, `start_date`, `end_date`, and `gpa`.
+                                *   `experience`: array of objects, each with `company`, `position`, `start_date`, `end_date`, and `responsibilities` (an array of strings).
+                                *   `projects`: array of objects, each with `name`, `description`, and `technologies` (an array of strings).
+                                *   `languages`: array of objects, each with `language` and `proficiency`.
+                                *   `certifications`: array of objects, each with `name`, `issuing_organization`, and `date_issued`.
+                                *   `awards`: array of objects, each with `name`, `issuing_organization`, and `date_awarded`.
+                            3.  **Return only the JSON object.** Do not include any other text, comments, or explanations.
+                        """
         
         prompt = f"""Please extract the profile information from the following text:
 
-{text}
-"""
+                    {text}
+                    """
         
         try:
             response_text = await self.llm_client.generate_completion(

@@ -66,7 +66,7 @@ api.interceptors.response.use(
       // Use a slight delay to prevent race conditions
       setTimeout(() => {
         window.location.href = '/login';
-      }, 100000);
+      }, 100);
     }
     return Promise.reject(error);
   }
