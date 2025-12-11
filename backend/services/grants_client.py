@@ -117,7 +117,6 @@ class GrantsClient:
         """Generic search used by /grants/search."""
         try:
             raw = await self._post_search(request)
-            print("Raw response from Simpler.Grants:", raw)
         except GrantsClientError:
             # propagate our known client exceptions
             raise
