@@ -1,7 +1,7 @@
 """
 Router package initialization.
 """
-from . import auth, documents, profiles, opportunities, materials, llm_health_check
+from . import auth, documents, profiles, opportunities, materials, llm_health_check, grants
 
 __all__ = [
     "auth", 
@@ -9,5 +9,6 @@ __all__ = [
     "profiles", 
     "opportunities", 
     "materials"
-    "llm_health_check"
+    "llm_health_check", 
+    "grants",
     ]
