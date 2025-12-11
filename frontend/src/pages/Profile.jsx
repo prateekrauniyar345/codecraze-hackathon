@@ -4,8 +4,13 @@ import { profilesAPI } from '../api/client';
 import { toast } from 'react-toastify';
 import { FiUser, FiBriefcase, FiBook, FiPlus, FiEdit2, FiTrash2, FiSave, FiX } from 'react-icons/fi';
 import { Accordion } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
+
+  // for navigation
+  const navigate = useNavigate();
+
   const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -51,13 +56,13 @@ const Profile = () => {
 
   const handleAddSkill = async () => {
     if (!newSkill.trim()) return;
-    
     try {
       const updatedSkills = [...(profile.skills || []), newSkill.trim()];
       const updated = await profilesAPI.update(profile.id, { skills: updatedSkills });
       setProfile(updated);
       setNewSkill('');
       toast.success('Skill added successfully');
+      await fetchProfile();
     } catch (error) {
       toast.error('Failed to add skill');
     }
@@ -69,6 +74,7 @@ const Profile = () => {
       const updated = await profilesAPI.update(profile.id, { skills: updatedSkills });
       setProfile(updated);
       toast.success('Skill removed successfully');
+      await fetchProfile();
     } catch (error) {
       toast.error('Failed to remove skill');
     }
@@ -108,6 +114,7 @@ const Profile = () => {
       
       setEditMode(prev => ({ ...prev, [type]: false }));
       toast.success(`${type.charAt(0).toUpperCase() + type.slice(1, -1)} added successfully`);
+      await fetchProfile();
     } catch (error) {
       toast.error(`Failed to add ${type.slice(0, -1)}`);
     }
@@ -121,6 +128,7 @@ const Profile = () => {
       setProfile(updated);
       setEditingItem(null);
       toast.success(`${type.charAt(0).toUpperCase() + type.slice(1, -1)} updated successfully`);
+      await fetchProfile();
     } catch (error) {
       toast.error(`Failed to update ${type.slice(0, -1)}`);
     }
@@ -132,6 +140,7 @@ const Profile = () => {
       const updated = await profilesAPI.update(profile.id, { [type]: updatedItems });
       setProfile(updated);
       toast.success(`${type.charAt(0).toUpperCase() + type.slice(1, -1)} removed successfully`);
+      await fetchProfile();
     } catch (error) {
       toast.error(`Failed to remove ${type.slice(0, -1)}`);
     }
