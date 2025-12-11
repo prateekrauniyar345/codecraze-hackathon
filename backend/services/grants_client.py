@@ -1,16 +1,23 @@
-# core/grants_client.py
+# services/grants_client.py
 """
 Client for Simpler.Grants.gov API with retry logic and async HTTP.
 """
-from typing import List, Optional, Literal, Dict, Any
-from models import SortOption, Filters, PaginationReq, GrantsAPISearchResponse
+from typing import List, Optional, Dict, Any
 import httpx
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import ValidationError
 from tenacity import (
     retry,
     stop_after_attempt,
     wait_exponential,
     retry_if_exception_type,
+)
+from schemas.grants import (
+    GrantsAPISearchResponse,
+    GrantsSearchRequest,
+    Filters,
+    OneOfFilter,
+    PaginationReq,
+    SortOption,
 )
 
 from config import get_settings
@@ -20,6 +27,27 @@ settings = get_settings()
 SIMPLE_GRANTS_DEFAULT_BASE_URL = "https://api.simpler.grants.gov/v1/opportunities/search"
 
 
+# ----- Custom exceptions -----
+class GrantsClientError(Exception):
+    """Base exception for grants client errors."""
+
+
+class GrantsAuthError(GrantsClientError):
+    """Missing or invalid API key/credentials."""
+
+
+class GrantsUpstreamError(GrantsClientError):
+    """Upstream HTTP error from Simpler.Grants.gov."""
+
+    def __init__(self, status_code: int, message: str, body: Any | None = None):
+        super().__init__(message)
+        self.status_code = status_code
+        self.body = body
+
+
+class GrantsValidationError(GrantsClientError):
+    """Returned when upstream response cannot be parsed/validated."""
+
 
 # ---------- Client class ----------
 
@@ -27,7 +55,7 @@ class GrantsClient:
     """Client for interacting with the Simpler.Grants.gov API."""
 
     def __init__(self) -> None:
-        # Expect something like SIMPLE_GRANTS_API_KEY or SIMPLE_GRANTS in your env
+        # Support either name in env: SIMPLE_GRANTS_API_KEY or SIMPLE_GRANTS
         self.api_key: Optional[str] = (
             getattr(settings, "SIMPLE_GRANTS_API_KEY", None)
             or getattr(settings, "SIMPLE_GRANTS", None)
@@ -42,7 +70,7 @@ class GrantsClient:
 
     def _get_headers(self) -> Dict[str, str]:
         if not self.api_key:
-            raise RuntimeError(
+            raise GrantsAuthError(
                 "Missing SIMPLE_GRANTS_API_KEY (or SIMPLE_GRANTS) in settings / environment."
             )
         return {
@@ -55,26 +83,55 @@ class GrantsClient:
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
     )
-    async def _post_search(self, payload: SearchRequest) -> Dict[str, Any]:
+    async def _post_search(self, payload: GrantsSearchRequest) -> Dict[str, Any]:
         """Low-level POST /v1/opportunities/search with retry."""
         async with httpx.AsyncClient(timeout=self.timeout) as client:
-            resp = await client.post(
-                f"{self.base_url}/v1/opportunities/search",
-                headers=self._get_headers(),
-                json=payload.model_dump(),
-            )
-            resp.raise_for_status()
-            return resp.json()
+            try:
+                resp = await client.post(
+                    self.base_url,
+                    headers=self._get_headers(),
+                    json=payload.model_dump(mode="json", exclude_none=True),
+                )
+                resp.raise_for_status()
+                return resp.json()
+            except httpx.HTTPStatusError as e:
+                # upstream returned 4xx/5xx
+                body = None
+                try:
+                    body = e.response.text
+                except Exception:
+                    pass
+                raise GrantsUpstreamError(
+                    status_code=e.response.status_code if e.response is not None else 0,
+                    message=f"Upstream HTTP error: {e}",
+                    body=body,
+                ) from e
+            except httpx.HTTPError as e:
+                # network / timeout / connection errors
+                raise GrantsUpstreamError(
+                    status_code=0,
+                    message=f"HTTP error contacting Simpler.Grants: {e}",
+                ) from e
 
-    async def search(self, request: SearchRequest) -> GrantsAPISearchResponse:
+    async def search(self, request: GrantsSearchRequest) -> GrantsAPISearchResponse:
         """Generic search used by /grants/search."""
         try:
             raw = await self._post_search(request)
+        except GrantsClientError:
+            # propagate our known client exceptions
+            raise
+        except Exception as e:
+            # Wrap any unexpected error
+            raise GrantsClientError(f"Unexpected grants client error: {e}") from e
+
+        # Validate API response shape into our Pydantic model
+        try:
             return GrantsAPISearchResponse.model_validate(raw)
         except ValidationError as e:
+            # Helpful debug output to the logs — include raw response when available
             print("Simpler.Grants response validation error:", e)
             print("Raw response body:", raw if "raw" in locals() else "no response")
-            raise
+            raise GrantsValidationError("Simpler.Grants response shape validation failed") from e
 
     async def search_grants_for_keywords(
         self,
@@ -90,17 +147,17 @@ class GrantsClient:
         query = " ".join(keywords[:6]) if keywords else None
 
         filters = Filters(
-            opportunity_status={"one_of": ["posted", "forecasted"]},
-            funding_instrument={"one_of": ["grant"]},
-            applicant_type={
-                "one_of": [
+            opportunity_status=OneOfFilter(one_of=["posted", "forecasted"]),
+            funding_instrument=OneOfFilter(one_of=["grant"]),
+            applicant_type=OneOfFilter(
+                one_of=[
                     "individuals",
                     "public_and_state_institutions_of_higher_education",
                 ]
-            },
+            ),
         )
 
-        payload = SearchRequest(
+        payload = GrantsSearchRequest(
             query=query,
             filters=filters,
             pagination=PaginationReq(

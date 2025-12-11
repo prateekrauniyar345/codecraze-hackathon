@@ -39,6 +39,7 @@ class Settings(BaseSettings):
         default=None,
         env="SIMPLE_GRANTS_API_KEY",
     )
+    SIMPLE_GRANTS_BASE_URL: Optional[str] = Field(default=None, env="SIMPLE_GRANTS_BASE_URL")
 
     @field_validator("SIMPLE_GRANTS_API_KEY", mode="before")
     @classmethod

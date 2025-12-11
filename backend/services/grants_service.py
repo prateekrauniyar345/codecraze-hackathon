@@ -3,7 +3,7 @@ from typing import List
 import re
 from collections import Counter
 
-from services.grants_client import grants_client, SearchRequest
+from services.grants_client import grants_client
 from schemas.grants import (
     GrantSuggestionsResponse,
     GrantSuggestion,
@@ -98,13 +98,7 @@ class GrantsService:
         """
         Used by /grants/search: user-driven search with explicit filters.
         """
-        # Convert our API schema into the core SearchRequest model
-        core_request = SearchRequest(
-            query=request.query,
-            filters=request.filters,
-            pagination=request.pagination,
-        )
-        api_result = await self.client.search(core_request)
+        api_result = await self.client.search(request)
 
         items = [
             GrantsSearchItem(

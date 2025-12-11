@@ -18,6 +18,26 @@ from .material import (
     MaterialType
 )
 
+# Grants schemas
+from .grants import (
+    SortOption,
+    PaginationReq,
+    OneOfFilter,
+    BoolOneOfFilter,
+    DateRangeFilter,
+    NumberRangeFilter,
+    Filters,
+    GrantSuggestion,
+    GrantSuggestionsResponse,
+    GrantsSearchRequest,
+    GrantsSearchItem,
+    GrantsSearchResponse,
+    GrantAPIOpportunity,
+    PaginationInfo,
+    GrantsAPISearchResponse,
+)
+
+
 __all__ = [
     "UserCreate",
     "UserLogin",
@@ -38,4 +58,20 @@ __all__ = [
     "MaterialGenerateRequest",
     "MaterialResponse",
     "MaterialType",
+    # Grants exports
+    "SortOption",
+    "PaginationReq",
+    "OneOfFilter",
+    "BoolOneOfFilter",
+    "DateRangeFilter",
+    "NumberRangeFilter",
+    "Filters",
+    "GrantSuggestion",
+    "GrantSuggestionsResponse",
+    "GrantsSearchRequest",
+    "GrantsSearchItem",
+    "GrantsSearchResponse",
+    "GrantAPIOpportunity",
+    "PaginationInfo",
+    "GrantsAPISearchResponse",
 ]
