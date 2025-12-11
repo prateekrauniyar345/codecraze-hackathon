@@ -139,9 +139,18 @@ class GrantsSearchItem(BaseModel):
     opportunity_number: str
     title: str
     agency_name: str
+    agency_code: Optional[str] = None
+
     post_date: Optional[str] = None
     close_date: Optional[str] = None
     opportunity_status: str
+
+    funding_instruments: Optional[List[str]] = None
+    funding_categories: Optional[List[str]] = None
+    award_floor: Optional[float] = None
+    award_ceiling: Optional[float] = None
+    is_cost_sharing: Optional[bool] = None
+
 
 
 class GrantsSearchResponse(BaseModel):
@@ -157,11 +166,30 @@ class GrantAPIOpportunity(BaseModel):
     opportunity_id: str
     opportunity_number: str
     opportunity_title: str
+    agency_code: Optional[str] = None
     agency_name: str
     post_date: Optional[str] = None
     close_date: Optional[str] = None
     opportunity_status: str
 
+    # Additional fields present in the upstream response
+    funding_instrument: Optional[str] = None
+    funding_category: Optional[str] = None
+    award_floor: Optional[float] = None
+    award_ceiling: Optional[float] = None
+    estimated_total_program_funding: Optional[float] = None
+    expected_number_of_awards: Optional[int] = None
+    applicant_types: Optional[List[str]] = None
+
+    # summary is an object in real upstream responses — keep as dict (or define a model)
+    summary: Optional[Dict[str, Any]] = None
+    # convenience: expose a flattened summary_description if you often need the text
+    summary_description: Optional[str] = None
+
+    is_cost_sharing: Optional[bool] = None
+
+    class Config:
+        extra = "allow"
 
 class PaginationInfo(BaseModel):
     page_offset: int

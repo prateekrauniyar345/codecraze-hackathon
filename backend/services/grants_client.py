@@ -117,21 +117,39 @@ class GrantsClient:
         """Generic search used by /grants/search."""
         try:
             raw = await self._post_search(request)
+            print("Raw response from Simpler.Grants:", raw)
         except GrantsClientError:
             # propagate our known client exceptions
             raise
         except Exception as e:
             # Wrap any unexpected error
             raise GrantsClientError(f"Unexpected grants client error: {e}") from e
-
-        # Validate API response shape into our Pydantic model
+        
         try:
             return GrantsAPISearchResponse.model_validate(raw)
         except ValidationError as e:
-            # Helpful debug output to the logs — include raw response when available
-            print("Simpler.Grants response validation error:", e)
-            print("Raw response body:", raw if "raw" in locals() else "no response")
-            raise GrantsValidationError("Simpler.Grants response shape validation failed") from e
+            import json, logging
+            logger = logging.getLogger(__name__)
+            # pretty-print raw response for logs
+            try:
+                pretty_raw = json.dumps(raw, indent=2, ensure_ascii=False)
+            except Exception:
+                pretty_raw = str(raw)
+
+            logger.error("Simpler.Grants response validation failed: %s", e)
+            logger.debug("Simpler.Grants raw response:\n%s", pretty_raw)
+
+            # Attach full details to the exception for the router to return during dev
+            detail = {
+                "message": "Simpler.Grants response shape validation failed",
+                "validation_error": e.errors() if hasattr(e, "errors") else str(e),
+                "raw": raw,
+            }
+            gv = GrantsValidationError("Simpler.Grants response shape validation failed")
+            gv.detail = detail
+            gv.raw = raw
+            gv.validation = e
+            raise gv from e
 
     async def search_grants_for_keywords(
         self,

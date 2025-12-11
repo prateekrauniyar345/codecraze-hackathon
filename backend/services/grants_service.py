@@ -106,9 +106,20 @@ class GrantsService:
                 opportunity_number=opp.opportunity_number,
                 title=opp.opportunity_title,
                 agency_name=opp.agency_name,
-                post_date=opp.post_date,
-                close_date=opp.close_date,
+                agency_code=opp.agency_code,
+
+                # pull from summary, not top level:
+                post_date=opp.summary.get("post_date"),
+                close_date=opp.summary.get("close_date"),
+
                 opportunity_status=opp.opportunity_status,
+
+                # also from summary:
+                funding_instruments=opp.summary.get("funding_instruments"),
+                funding_categories=opp.summary.get("funding_categories"),
+                award_flooropp=opp.summary.get("award_floor"),
+                award_ceiling=opp.summary.get("award_ceiling"),
+                is_cost_sharing=opp.summary.get("is_cost_sharing"),
             )
             for opp in api_result.data
         ]
