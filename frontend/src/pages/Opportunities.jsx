@@ -167,9 +167,9 @@ const Opportunities = () => {
                   )}
                 </div>
               )}
-              {researchTab === 'search' && (
+              <div style={{ display: researchTab === 'search' ? 'block' : 'none' }}>
                 <GrantSearch />
-              )}
+              </div>
             </div>
           )}
         </div>
