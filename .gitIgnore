@@ -41,3 +41,7 @@ temp*
 
 # log files
 *.log
+
+
+# alembic file
+*.ini

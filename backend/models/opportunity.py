@@ -19,6 +19,13 @@ class OpportunityStatus(str, enum.Enum):
     REJECTED = "REJECTED"
 
 
+class OpportunityType(str, enum.Enum):
+    """Opportunity type enumeration."""
+    FULL_TIME = "FULL_TIME"
+    INTERNSHIP = "INTERNSHIP"
+    RESEARCH = "RESEARCH"
+
+
 class Opportunity(Base):
     """Opportunity model for tracking applications."""
     
@@ -33,6 +40,7 @@ class Opportunity(Base):
     fit_score = Column(Integer, CheckConstraint('fit_score >= 0 AND fit_score <= 100'))
     fit_analysis = Column(JSONB)
     status = Column(Enum(OpportunityStatus), default=OpportunityStatus.TO_APPLY)
+    type = Column(Enum(OpportunityType), default=OpportunityType.FULL_TIME)
     deadline = Column(Date)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

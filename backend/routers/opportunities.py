@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from database import get_db
 from models.user import User
-from models.opportunity import Opportunity, OpportunityRequirement, OpportunityStatus
+from models.opportunity import Opportunity, OpportunityRequirement, OpportunityStatus, OpportunityType
 from models.profile import Profile
 from schemas.opportunity import (
     OpportunityCreate,
@@ -35,7 +35,8 @@ async def create_opportunity(
         url=opp_data.url,
         description=opp_data.description,
         deadline=opp_data.deadline,
-        status=OpportunityStatus.TO_APPLY
+        status=OpportunityStatus.TO_APPLY,
+        type=opp_data.type or OpportunityType.FULL_TIME
     )
     
     db.add(opportunity)
@@ -163,6 +164,7 @@ async def analyze_existing_opportunity(
 @router.get("/", response_model=List[OpportunityResponse])
 async def list_opportunities(
     status_filter: Optional[OpportunityStatus] = None,
+    type_filter: Optional[OpportunityType] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -171,6 +173,9 @@ async def list_opportunities(
     
     if status_filter:
         query = query.filter(Opportunity.status == status_filter)
+    
+    if type_filter:
+        query = query.filter(Opportunity.type == type_filter)
     
     opportunities = query.order_by(Opportunity.created_at.desc()).all()
     

@@ -4,7 +4,7 @@ Opportunity schemas for tracking applications.
 from pydantic import BaseModel, Field, HttpUrl
 from datetime import datetime, date
 from typing import Optional, List, Dict, Any
-from models.opportunity import OpportunityStatus
+from models.opportunity import OpportunityStatus, OpportunityType
 
 
 class OpportunityCreate(BaseModel):
@@ -14,6 +14,7 @@ class OpportunityCreate(BaseModel):
     url: Optional[str] = None
     description: str
     deadline: Optional[date] = None
+    type: Optional[OpportunityType] = None
 
 
 class OpportunityUpdate(BaseModel):
@@ -23,6 +24,7 @@ class OpportunityUpdate(BaseModel):
     url: Optional[str] = None
     description: Optional[str] = None
     status: Optional[OpportunityStatus] = None
+    type: Optional[OpportunityType] = None
     deadline: Optional[date] = None
 
 
@@ -49,6 +51,7 @@ class OpportunityResponse(BaseModel):
     fit_score: Optional[int] = None
     fit_analysis: Optional[Dict[str, Any]] = None
     status: OpportunityStatus
+    type: OpportunityType
     deadline: Optional[date] = None
     created_at: datetime
     updated_at: datetime

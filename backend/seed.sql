@@ -100,7 +100,7 @@ INSERT INTO profiles (user_id, document_id, full_text, skills, education, experi
 '[{"name": "Medical Image Classification", "description": "CNN diagnostic tool with 95% accuracy", "technologies": ["TensorFlow", "Flask", "Docker"]}, {"name": "Financial Forecasting", "description": "LSTM model for stock prediction", "technologies": ["PyTorch", "Python"]}]'::jsonb);
 
 -- Insert sample opportunities
-INSERT INTO opportunities (user_id, title, organization, url, description, fit_score, fit_analysis, status, deadline) VALUES
+INSERT INTO opportunities (user_id, title, organization, url, description, fit_score, fit_analysis, status, deadline, type) VALUES
 (1, 'Software Engineering Intern', 'Meta', 'https://www.metacareers.com/jobs', 
 'Meta is seeking talented software engineering interns to join our team. You will work on cutting-edge products used by billions of people worldwide.
 
@@ -118,7 +118,8 @@ Preferred:
 85,
 '{"overall_fit": 85, "strengths": ["Strong React and Python experience", "Full-stack development background", "Relevant internship experience at Tech Corp"], "gaps": ["Could highlight more algorithm competition experience", "Limited C++ experience mentioned"], "recommendations": ["Emphasize the e-commerce platform project", "Highlight the scalability of previous work"]}'::jsonb,
 'TO_APPLY',
-'2025-02-15'),
+'2025-02-15',
+'INTERNSHIP'),
 
 (1, 'ML Engineer Internship', 'OpenAI', 'https://openai.com/careers',
 'Join OpenAI to work on cutting-edge AI research and products. Help us build safe and beneficial AGI.
@@ -132,7 +133,8 @@ Requirements:
 72,
 '{"overall_fit": 72, "strengths": ["Python expertise", "ML research experience", "AI chatbot project demonstrates NLP knowledge"], "gaps": ["BS level while MS/PhD preferred", "Only 2 publications vs typical 3+ for competitive candidates"], "recommendations": ["Highlight research assistant role prominently", "Emphasize quick learning ability and passion for AI"]}'::jsonb,
 'TO_APPLY',
-'2025-01-30'),
+'2025-01-30',
+'INTERNSHIP'),
 
 (2, 'Data Science Internship', 'Netflix', 'https://jobs.netflix.com',
 'Netflix is looking for a data science intern to work on personalization and recommendation systems.
@@ -151,7 +153,8 @@ Nice to have:
 92,
 '{"overall_fit": 92, "strengths": ["Perfect educational background (MS from MIT)", "Direct experience with recommendation algorithms at Google", "Strong ML framework expertise", "Production ML experience"], "gaps": ["Could mention more about A/B testing experience"], "recommendations": ["Lead with Google recommendation system work", "Emphasize the 10M+ user scale impact", "Highlight cross-functional collaboration skills"]}'::jsonb,
 'APPLIED',
-'2025-02-28'),
+'2025-02-28',
+'FULL_TIME'),
 
 (2, 'AI Research Intern', 'DeepMind', 'https://www.deepmind.com/careers',
 'DeepMind seeks exceptional AI researchers to push the boundaries of artificial intelligence.
@@ -165,7 +168,8 @@ Requirements:
 88,
 '{"overall_fit": 88, "strengths": ["Excellent publication record (3 papers in NeurIPS, ICML)", "Strong theoretical background from Stanford Math degree", "Novel architecture development experience", "Research mentorship experience"], "gaps": ["PhD student/recent grad preferred, currently MS student", "Could emphasize more theoretical contributions"], "recommendations": ["Highlight the novel architectures work", "Emphasize mathematical foundations from undergrad", "Mention research independence and leadership"]}'::jsonb,
 'INTERVIEW',
-'2025-03-15');
+'2025-03-15',
+'RESEARCH');
 
 -- Insert sample opportunity requirements
 INSERT INTO opportunity_requirements (opportunity_id, requirement_text, requirement_type, is_mandatory) VALUES

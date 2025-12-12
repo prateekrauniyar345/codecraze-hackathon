@@ -117,9 +117,16 @@ export const opportunitiesAPI = {
     const params = profileId ? `?profile_id=${profileId}` : '';
     return api.post(`/opportunities/${id}/analyze${params}`);
   },
-  list: (status = null) => {
-    const params = status ? `?status_filter=${status}` : '';
-    return api.get(`/opportunities/${params}`);
+  list: (status = null, type = null) => {
+    const params = new URLSearchParams();
+    if (status) {
+      params.append('status_filter', status);
+    }
+    if (type) {
+      params.append('type_filter', type);
+    }
+    const queryString = params.toString();
+    return api.get(`/opportunities/${queryString ? `?${queryString}` : ''}`);
   },
   get: (id) => api.get(`/opportunities/${id}`),
   update: (id, data) => api.patch(`/opportunities/${id}`, data),

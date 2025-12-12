@@ -8,14 +8,15 @@ const Opportunities = () => {
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState(null);
+  const [typeFilter, setTypeFilter] = useState('FULL_TIME');
 
   useEffect(() => {
     fetchOpportunities();
-  }, [statusFilter]);
+  }, [statusFilter, typeFilter]);
 
   const fetchOpportunities = async () => {
     try {
-      const response = await opportunitiesAPI.list(statusFilter);
+      const response = await opportunitiesAPI.list(statusFilter, typeFilter);
       setOpportunities(response.data);
     } catch (error) {
       toast.error('Failed to load opportunities');
@@ -23,6 +24,13 @@ const Opportunities = () => {
       setLoading(false);
     }
   };
+
+  const opportunityTypes = [
+    { value: 'FULL_TIME', label: 'Full Time Jobs' },
+    { value: 'INTERNSHIP', label: 'Internships' },
+    { value: 'RESEARCH', label: 'Research Opportunities' },
+  ];
+
 
   const statuses = [
     { value: null, label: 'All' },
@@ -47,6 +55,28 @@ const Opportunities = () => {
         <Link to="/analyze" className="btn btn-primary">
           + Add New Opportunity
         </Link>
+      </div>
+
+      <div className="mb-4 border-b border-gray-200 dark:border-gray-700">
+        <ul className="flex flex-wrap -mb-px text-sm font-medium text-center" id="myTab" data-tabs-toggle="#myTabContent" role="tablist">
+            {opportunityTypes.map((tab) => (
+                <li className="mr-2" role="presentation" key={tab.value}>
+                    <button
+                        className={`inline-block p-4 border-b-2 rounded-t-lg ${
+                            typeFilter === tab.value
+                                ? 'border-primary-600 text-primary-600'
+                                : 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300'
+                        }`}
+                        onClick={() => setTypeFilter(tab.value)}
+                        type="button"
+                        role="tab"
+                        aria-selected={typeFilter === tab.value}
+                    >
+                        {tab.label}
+                    </button>
+                </li>
+            ))}
+        </ul>
       </div>
 
       {/* Filters */}

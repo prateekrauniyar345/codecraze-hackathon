@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS users CASCADE;
 -- Create enum types
 CREATE TYPE document_type AS ENUM ('resume', 'cv', 'research_paper', 'project_information', 'cover_letter', 'other');
 CREATE TYPE opportunity_status AS ENUM ('TO_APPLY', 'APPLIED', 'INTERVIEW', 'OFFER', 'REJECTED');
+CREATE TYPE opportunity_type AS ENUM ('FULL_TIME', 'INTERNSHIP', 'RESEARCH');
 CREATE TYPE material_type AS ENUM ('email', 'subject_line', 'sop_paragraph', 'fit_bullets');
 
 -- Users table
@@ -84,6 +85,7 @@ CREATE TABLE opportunities (
     fit_score INTEGER CHECK (fit_score >= 0 AND fit_score <= 100),
     fit_analysis JSONB,
     status opportunity_status DEFAULT 'TO_APPLY',
+    type opportunity_type DEFAULT 'FULL_TIME',
     deadline DATE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

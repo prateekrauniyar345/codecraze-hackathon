@@ -26,7 +26,14 @@ class Document(Base):
     filename = Column(String(255), nullable=False)
     file_path = Column(String(512), nullable=False)
     file_size = Column(Integer)
-    doc_type = Column(Enum(DocumentType, values_callable=lambda x: [e.value for e in x]), default=DocumentType.RESUME)
+    doc_type = Column(
+                Enum(
+                    DocumentType,
+                    name="document_type",  
+                    values_callable=lambda x: [e.value for e in x],
+                ),
+                default=DocumentType.RESUME,
+            )
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
