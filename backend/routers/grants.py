@@ -39,8 +39,10 @@ async def get_grant_suggestions(
         .order_by(Profile.created_at.desc())
         .first()
     )
+    print("fetche d profile:", profile)
 
-    if not profile or not profile.summary_text:
+
+    if not profile or not profile.full_text:
         raise HTTPException(
             status_code=400,
             detail="No profile found. Upload a resume and generate a profile first.",
@@ -49,7 +51,7 @@ async def get_grant_suggestions(
     try:
         return await grants_service.get_suggestions_for_profile(
             profile_id=profile.id,
-            profile_text=profile.summary_text,
+            profile_text=profile.full_text,
             limit=limit,
         )
     except GrantsAuthError as e:

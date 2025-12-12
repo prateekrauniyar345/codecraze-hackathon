@@ -115,6 +115,10 @@ class GrantsClient:
 
     async def search(self, request: GrantsSearchRequest) -> GrantsAPISearchResponse:
         """Generic search used by /grants/search."""
+        # Ensure that a default sort order is provided if none is specified
+        if not request.pagination.sort_order:
+            request.pagination.sort_order = [SortOption(order_by="post_date", sort_direction="descending")]
+            
         try:
             raw = await self._post_search(request)
         except GrantsClientError:
@@ -161,7 +165,16 @@ class GrantsClient:
          - builds query from profile keywords
          - filters to posted/forecasted grants for individuals/higher-ed
         """
+        # Build a query string from keywords but ensure it meets upstream length requirements.
         query = " ".join(keywords[:6]) if keywords else None
+        if query:
+            query = " ".join(query.split())  # collapse whitespace
+            # If query is too short, omit it so upstream doesn't 422 (upstream enforces min length)
+            if len(query.strip()) < 5:
+                query = None
+            # Cap query length to a reasonable upper bound (upstream often caps at ~1000)
+            elif len(query) > 500:
+                query = query[:500]
 
         filters = Filters(
             opportunity_status=OneOfFilter(one_of=["posted", "forecasted"]),

@@ -141,4 +141,34 @@ export const materialsAPI = {
   delete: (id) => api.delete(`/materials/${id}`),
 };
 
+export const grantsAPI = {
+  searchGrants: (payload) => {
+    // Prune empty filters and ensure pagination.sort_order exists
+    const body = { ...payload };
+    if (body.filters) {
+      const pruned = {};
+      for (const [k, v] of Object.entries(body.filters)) {
+        if (v == null) continue;
+        if (Object.prototype.hasOwnProperty.call(v, 'one_of')) {
+          if (Array.isArray(v.one_of) && v.one_of.length > 0) pruned[k] = { one_of: v.one_of };
+        } else {
+          // date or range objects: keep if any non-null field exists
+          const entries = Object.entries(v).filter(([_, val]) => val !== null && val !== undefined && val !== '');
+          if (entries.length) pruned[k] = Object.fromEntries(entries);
+        }
+      }
+      body.filters = Object.keys(pruned).length ? pruned : undefined;
+    }
+
+    // Ensure pagination exists and has at least one sort_order
+    body.pagination = body.pagination || { page_offset: 1, page_size: 10 };
+    if (!body.pagination.sort_order || body.pagination.sort_order.length === 0) {
+      body.pagination.sort_order = [{ order_by: 'post_date', sort_direction: 'descending' }];
+    }
+
+    return api.post('/grants/search', body);
+  },
+  getGrantSuggestions: () => api.get('/grants/suggestions'),
+};
+
 export default api;
