@@ -2,7 +2,6 @@
 
 from datetime import date
 from typing import List, Optional, Dict, Any, Literal
-from uuid import UUID
 from pydantic import BaseModel, Field
 
 
@@ -86,7 +85,7 @@ class GrantSuggestion(BaseModel):
 
 
 class GrantSuggestionsResponse(BaseModel):
-    profile_id: Optional[UUID] = None
+    profile_id: Optional[str] = None
     query_keywords: List[str]
     applied_filters: Dict[str, Any]
     total_records: int

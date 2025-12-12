@@ -11,6 +11,9 @@ from tenacity import (
     retry_if_exception_type
 )
 from config import get_settings
+from services.custom_llm_propmpt import build_search_payload_prompt
+import logging
+import ast
 
 settings = get_settings()
 
@@ -192,90 +195,105 @@ class LLMClient:
         except Exception as e:
             raise Exception(f"Fit analysis failed: {str(e)}")
 
-    async def generate_keywords_from_profile(self, profile_text: str) -> list[str]:
+
+
+    async def generate_query_param_from_profile(self, profile_text: str, max_terms: int = 8) -> Optional[str]:
         """
-        Generate keywords from profile for grant searching.
+        Generate a concise search query string from profile text for Simpler.Grants API.
+
+        Returns a string (5-100 chars per API spec) or raises exception if all attempts fail.
         """
-        system_prompt = """You are an expert career advisor and grant writing consultant. 
-                           Your task is to analyze a candidate's profile and extract a list of keywords 
-                           to be used for searching for research grants and fellowships. 
-                           The keywords should be highly relevant to the candidate's skills, experience, and education. 
-                           You must respond with a JSON object containing a list of keywords."""
+        system_prompt = '''
+            You are an expert at analyzing academic/research profiles and generating grant search queries.
+            Generate a focused search query that will find relevant federal grant opportunities.
+            Focus on: research area, field of study, expertise, or target funding areas.
+            Use terms like: 'research', 'fellowship', 'education', 'STEM', specific fields, etc.
+            Return ONLY the query text - no quotes, no explanations, no markup.
+            example of query that we are using to find grants are like this :
+            {
+                "filters": {
+                    "agency": {
+                    "one_of": [
+                        "USAID",
+                        "DOC"
+                    ]
+                    },
+                    "applicant_type": {
+                    "one_of": [
+                        "state_governments",
+                        "county_governments",
+                        "individuals"
+                    ]
+                    },
+                    "close_date": {
+                    "start_date": "2024-01-01"
+                    },
+                    "funding_category": {
+                    "one_of": [
+                        "recovery_act",
+                        "arts",
+                        "natural_resources"
+                    ]
+                    },
+                    "funding_instrument": {
+                    "one_of": [
+                        "cooperative_agreement",
+                        "grant"
+                    ]
+                    },
+                    "opportunity_status": {
+                    "one_of": [
+                        "forecasted",
+                        "posted"
+                    ]
+                    },
+                    "post_date": {
+                    "end_date": "2024-02-01",
+                    "start_date": "2024-01-01"
+                    }
+                },
+                "pagination": {
+                    "page_offset": 1,
+                    "page_size": 25,
+                    "sort_order": [
+                    {
+                        "order_by": "opportunity_id",
+                        "sort_direction": "ascending"
+                    }
+                    ]
+                },
+                "query": "research"
+                }"
+            )
+    
+                and you only need to generate the query part of above paylod like this : "research"
+                ALSO, make sure the query length is between 1 and 50 characters.
+             '''
 
-        prompt = f"""Analyze the following candidate profile and generate a list of 5-10 relevant keywords for a grant search.
-
-                    CANDIDATE PROFILE:
-                    {profile_text}
-
-                    Provide the keywords in a JSON object with a single key 'keywords' which is a list of strings. For example:
-                    {{
-                      "keywords": ["machine learning", "natural language processing", "computer vision", "robotics"]
-                    }}"""
+        prompt = f"Profile:\n{profile_text}\n\nGenerate a relevant grant search query for this profile:" 
+        logger = logging.getLogger(__name__)
         try:
-            response_text = await self.generate_completion(
+            query = await self.generate_completion(
                 prompt=prompt,
                 system_prompt=system_prompt,
                 temperature=0.5,
-                max_tokens=100,
-                json_mode=True
+                max_tokens=1000,
             )
-            result = json.loads(response_text)
-            if "keywords" not in result or not isinstance(result["keywords"], list):
-                raise ValueError("Invalid response format from LLM")
-            return result["keywords"]
-        except json.JSONDecodeError as e:
-            raise Exception(f"Failed to parse LLM JSON response: {str(e)}")
+            print("raw query is :", query)
+            query = query.strip().strip('"').strip("'")
+            print("generated query is :", query)
+
+
+            if 1 <= len(query) <= 100:
+                return query
+            else:
+                logger.warning(f"Generated query length out of bounds: '{query}' (length {len(query)})")
+                return None
         except Exception as e:
-            raise Exception(f"Keyword generation failed: {str(e)}")
-
-    async def generate_grants_search_request_from_profile(self, profile_text: str, max_results: int = 10) -> dict:
-        """
-        Generate a GrantsSearchRequest-compatible JSON payload from a user profile.
-
-        The LLM MUST return a JSON object with these keys:
-        - query: optional string (min length 5 if present)
-        - filters: optional object following the Filters model (use `one_of` arrays for enum fields)
-        - pagination: object with `page_offset`, `page_size`, and non-empty `sort_order` array
-
-        Returns the parsed dict. Raises on invalid/malformed response.
-        """
-        system_prompt = '''You are an expert data engineer building search payloads for a grants search API.\n
-You MUST return a single valid JSON object only (no markdown, no explanation).\n
-The object must match this shape (example):\n{
-  "query": "machine learning fellowship",
-  "filters": {
-    "opportunity_status": {"one_of": ["posted"]},
-    "funding_instrument": {"one_of": ["grant"]},
-    "applicant_type": {"one_of": ["individuals"]},
-    "agency": {"one_of": ["NSF"]},
-    "post_date": {"start_date": "2024-01-01", "end_date": "2025-01-01"}
-  },
-  "pagination": {"page_offset": 1, "page_size": %d, "sort_order": [{"order_by":"post_date","sort_direction":"descending"}]}
-}''' % max_results
-
-        prompt = f"""Construct a GrantsSearchRequest JSON payload that will find grant opportunities matching the candidate profile below.\n\nCANDIDATE PROFILE:\n{profile_text}\n\nRequirements:\n- Ensure `query` if provided is at least 5 characters. If you cannot make a sensible query, set `query` to null.\n- Populate `filters` with the most relevant values (use `one_of` arrays).\n- Fill `pagination.page_offset` with 1 and `page_size` with {max_results}.\n- `pagination.sort_order` MUST be a non-empty array; prefer post_date descending.\n- Dates must be ISO strings (YYYY-MM-DD).\n- Keep the JSON minimal and valid; do not include extraneous keys.\n\nReturn only the JSON object."""
-
-        try:
-            response_text = await self.generate_completion(
-                prompt=prompt,
-                system_prompt=system_prompt,
-                temperature=0.3,
-                max_tokens=800,
-                json_mode=True,
-            )
-            payload = json.loads(response_text)
-
-            # Basic validation
-            if "pagination" not in payload:
-                raise ValueError("Missing pagination in LLM payload")
-            if not payload["pagination"].get("sort_order"):
-                raise ValueError("pagination.sort_order must be non-empty")
-
-            return payload
-        except json.JSONDecodeError as e:
-            raise Exception(f"Failed to parse LLM JSON payload: {str(e)}")
-        except Exception as e:
-            raise Exception(f"Grants payload generation failed: {str(e)}")
+            logger.error(f"Error generating query from profile: {e}")
+            return None
+       
+        
     
     async def generate_email(
         self,

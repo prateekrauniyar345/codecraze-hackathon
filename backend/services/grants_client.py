@@ -87,10 +87,33 @@ class GrantsClient:
         """Low-level POST /v1/opportunities/search with retry."""
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
+                # Dump the Pydantic model to plain dict and sanitize
+                data = payload.model_dump(mode="json", exclude_none=True)
+
+                # Sanitize 'query' to avoid upstream 422s (API spec: 5-100 chars)
+                q = data.get("query")
+                if isinstance(q, str):
+                    q = q.strip()
+                    if len(q) == 0 or len(q) < 5:
+                        # remove too-short queries to avoid upstream validation errors
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.debug("Stripping too-short 'query' before upstream call: '%s'", q)
+                        data.pop("query", None)
+                    elif len(q) > 100:
+                        # API spec: max query length is 100 chars
+                        data["query"] = q[:100]
+
+                # Ensure pagination.sort_order exists for upstream
+                pagination = data.get("pagination") or {}
+                if not pagination.get("sort_order"):
+                    pagination.setdefault("sort_order", [{"order_by": "post_date", "sort_direction": "descending"}])
+                    data["pagination"] = pagination
+
                 resp = await client.post(
                     self.base_url,
                     headers=self._get_headers(),
-                    json=payload.model_dump(mode="json", exclude_none=True),
+                    json=data,
                 )
                 resp.raise_for_status()
                 return resp.json()
@@ -154,52 +177,7 @@ class GrantsClient:
             gv.validation = e
             raise gv from e
 
-    async def search_grants_for_keywords(
-        self,
-        keywords: List[str],
-        limit: int = 10,
-        page: int = 1,
-    ) -> GrantsAPISearchResponse:
-        """
-        Opinionated search used by /grants/suggestions:
-         - builds query from profile keywords
-         - filters to posted/forecasted grants for individuals/higher-ed
-        """
-        # Build a query string from keywords but ensure it meets upstream length requirements.
-        query = " ".join(keywords[:6]) if keywords else None
-        if query:
-            query = " ".join(query.split())  # collapse whitespace
-            # If query is too short, omit it so upstream doesn't 422 (upstream enforces min length)
-            if len(query.strip()) < 5:
-                query = None
-            # Cap query length to a reasonable upper bound (upstream often caps at ~1000)
-            elif len(query) > 500:
-                query = query[:500]
 
-        filters = Filters(
-            opportunity_status=OneOfFilter(one_of=["posted", "forecasted"]),
-            funding_instrument=OneOfFilter(one_of=["grant"]),
-            applicant_type=OneOfFilter(
-                one_of=[
-                    "individuals",
-                    "public_and_state_institutions_of_higher_education",
-                ]
-            ),
-        )
-
-        payload = GrantsSearchRequest(
-            query=query,
-            filters=filters,
-            pagination=PaginationReq(
-                page_offset=page,
-                page_size=limit,
-                sort_order=[
-                    SortOption(order_by="post_date", sort_direction="descending")
-                ],
-            ),
-        )
-
-        return await self.search(payload)
 
 
 # Global client instance (same pattern as llm_client)
