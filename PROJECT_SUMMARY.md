@@ -122,10 +122,11 @@ All components have been successfully implemented according to the instruction.m
 
 ## 🔌 API Endpoints
 
-### Authentication (3 endpoints)
+### Authentication (4 endpoints)
 - POST `/auth/register` - Register user
 - POST `/auth/login` - Login user
 - GET `/auth/me` - Get current user
+- GET `/auth/tokens` - Get current JWT token information
 
 ### Documents (5 endpoints)
 - POST `/documents/upload` - Upload file
@@ -158,7 +159,7 @@ All components have been successfully implemented according to the instruction.m
 - GET `/materials/{id}` - Get material
 - DELETE `/materials/{id}` - Delete material
 
-**Total: 24 API endpoints**
+**Total: 25 API endpoints**
 
 ---
 
@@ -310,7 +311,7 @@ All requirements from the instruction.md have been implemented:
 
 ## 📊 Project Statistics
 
-- **Backend Files**: 25+ Python files
+- **Backend Files**: 26+ Python files
 - **Frontend Files**: 15+ React components/pages
 - **Database Tables**: 7 tables
 - **API Endpoints**: 24 endpoints

@@ -1,24 +1,29 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { opportunitiesAPI, grantsAPI } from '../api/client';
+import { opportunitiesAPI, grantsAPI, jobsAPI } from '../api/client';
 import { toast } from 'react-toastify';
 import { FiBriefcase } from 'react-icons/fi';
 import GrantSearch from '../components/GrantSearch';
+import JobSearch from '../components/JobSearch';
 
 const Opportunities = () => {
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState('FULL_TIME');
   const [researchTab, setResearchTab] = useState('suggestions'); // 'suggestions' or 'search'
+  const [jobsTab, setJobsTab] = useState('suggestions'); // 'suggestions' or 'search'
   const [grantSuggestions, setGrantSuggestions] = useState([]);
   const [grantLoading, setGrantLoading] = useState(false);
+  const [jobSuggestions, setJobSuggestions] = useState([]);
+  const [jobLoading, setJobLoading] = useState(false);
   const [suggestionsPage, setSuggestionsPage] = useState(1);
   const [suggestionsPageSize, setSuggestionsPageSize] = useState(10);
   const [suggestionsTotalPages, setSuggestionsTotalPages] = useState(0);
   const [suggestionsFetched, setSuggestionsFetched] = useState(false);
+  const [jobSuggestionsFetched, setJobSuggestionsFetched] = useState(false);
 
   useEffect(() => {
-    if (typeFilter !== 'RESEARCH') {
+    if (typeFilter !== 'RESEARCH' && typeFilter !== 'JOBS') {
       fetchOpportunities();
     }
   }, [typeFilter]);
@@ -52,14 +57,31 @@ const Opportunities = () => {
     }
   };
 
+  const handleFetchJobSuggestions = async () => {
+    setJobLoading(true);
+    try {
+      const response = await jobsAPI.getJobSuggestions('us', 20);
+      const items = response.data?.items || [];
+      setJobSuggestions(items);
+      setJobSuggestionsFetched(true);
+      setSuggestionsPage(1);
+      setSuggestionsPageSize(10);
+      setSuggestionsTotalPages(items.length ? Math.ceil(items.length / 10) : 0);
+    } catch (error) {
+      toast.error('Failed to fetch job suggestions');
+    } finally {
+      setJobLoading(false);
+    }
+  };
+
 
   const opportunityTypes = [
-    { value: 'FULL_TIME', label: 'Full Time Jobs' },
-    { value: 'INTERNSHIP', label: 'Internships' },
+    { value: 'FULL_TIME', label: 'My Opportunities' },
+    { value: 'JOBS', label: 'Job Search' },
     { value: 'RESEARCH', label: 'Research Opportunities' },
   ];
 
-  if (loading && typeFilter !== 'RESEARCH') {
+  if (loading && typeFilter !== 'RESEARCH' && typeFilter !== 'JOBS') {
     return <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>;
   }
 
@@ -169,6 +191,113 @@ const Opportunities = () => {
               )}
               <div style={{ display: researchTab === 'search' ? 'block' : 'none' }}>
                 <GrantSearch />
+              </div>
+            </div>
+          )}
+        </div>
+      ) : typeFilter === 'JOBS' ? (
+        <div>
+          <div className="mb-4 border-b border-gray-200 dark:border-gray-700">
+            <ul className="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
+              <li className="mr-2" role="presentation">
+                <button
+                  className={`inline-block p-4 border-b-2 rounded-t-lg ${jobsTab === 'suggestions' ? 'border-primary-600 text-primary-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300'}`}
+                  onClick={() => setJobsTab('suggestions')}
+                  type="button"
+                  role="tab"
+                  aria-selected={jobsTab === 'suggestions'}
+                >
+                  Get Suggestions
+                </button>
+              </li>
+              <li className="mr-2" role="presentation">
+                <button
+                  className={`inline-block p-4 border-b-2 rounded-t-lg ${jobsTab === 'search' ? 'border-primary-600 text-primary-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300'}`}
+                  onClick={() => setJobsTab('search')}
+                  type="button"
+                  role="tab"
+                  aria-selected={jobsTab === 'search'}
+                >
+                  Search Jobs
+                </button>
+              </li>
+            </ul>
+          </div>
+          {jobLoading ? (
+            <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>
+          ) : (
+            <div>
+              {jobsTab === 'suggestions' && (
+                <div>
+                  {!jobSuggestionsFetched ? (
+                    <div className="py-6">
+                      <button className="btn btn-primary" onClick={handleFetchJobSuggestions}>Get job suggestions based on profile</button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="space-y-4">
+                        {jobSuggestions.slice((suggestionsPage - 1) * suggestionsPageSize, suggestionsPage * suggestionsPageSize).map((job) => (
+                          <div key={job.id} className="card hover:shadow-lg transition-shadow p-6">
+                            <div className="flex justify-between items-start mb-3">
+                              <div className="flex-1">
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{job.title}</h3>
+                                {job.company && (
+                                  <p className="text-lg text-gray-700 dark:text-gray-300 mb-1">{job.company}</p>
+                                )}
+                                <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                                  {job.location && <span>📍 {job.location}</span>}
+                                  {job.category && <span>🏷️ {job.category}</span>}
+                                </div>
+                              </div>
+                              {job.redirect_url && (
+                                <a
+                                  href={job.redirect_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="btn btn-sm btn-primary"
+                                >
+                                  View Job
+                                </a>
+                              )}
+                            </div>
+                            {job.description && (
+                              <p className="text-gray-700 dark:text-gray-300 mb-3 line-clamp-3">{job.description}</p>
+                            )}
+                            {(job.salary_min || job.salary_max) && (
+                              <p className="text-sm font-medium text-primary-600">
+                                💰 {job.salary_min && job.salary_max 
+                                  ? `$${job.salary_min.toLocaleString()} - $${job.salary_max.toLocaleString()}`
+                                  : job.salary_min 
+                                  ? `$${job.salary_min.toLocaleString()}+`
+                                  : `Up to $${job.salary_max.toLocaleString()}`}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Pagination for suggestions */}
+                      <div className="flex items-center justify-between mt-4">
+                        <div className="flex items-center space-x-2">
+                          <button className="btn" onClick={() => setSuggestionsPage(p => Math.max(1, p - 1))} disabled={suggestionsPage <= 1}>Prev</button>
+                          <span>Page {suggestionsPage} of {suggestionsTotalPages || 1}</span>
+                          <button className="btn" onClick={() => setSuggestionsPage(p => (suggestionsTotalPages ? Math.min(suggestionsTotalPages, p + 1) : p + 1))} disabled={suggestionsTotalPages && suggestionsPage >= suggestionsTotalPages}>Next</button>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <label className="text-sm">Page size</label>
+                          <select value={suggestionsPageSize} onChange={(e) => { const s = Number(e.target.value); setSuggestionsPageSize(s); setSuggestionsPage(1); setSuggestionsTotalPages(jobSuggestions.length ? Math.ceil(jobSuggestions.length / s) : 0); }} className="select select-bordered">
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
+                            <option value={50}>50</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div style={{ display: jobsTab === 'search' ? 'block' : 'none' }}>
+                <JobSearch />
               </div>
             </div>
           )}

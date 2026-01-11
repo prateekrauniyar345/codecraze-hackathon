@@ -171,4 +171,17 @@ export const grantsAPI = {
   getGrantSuggestions: () => api.get('/grants/suggestions'),
 };
 
+export const jobsAPI = {
+  searchJobs: (payload) => {
+    // Keep it simple - just pass the payload as-is
+    return api.post('/jobs/search', payload);
+  },
+  getJobSuggestions: (country = 'us', limit = 10) => {
+    const params = new URLSearchParams();
+    if (country) params.append('country', country);
+    if (limit) params.append('limit', limit.toString());
+    return api.get(`/jobs/suggestions?${params.toString()}`);
+  },
+};
+
 export default api;

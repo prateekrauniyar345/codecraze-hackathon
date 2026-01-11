@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import get_settings
 from database import init_db
 from logging_config import setup_logging
-from routers import auth, documents, profiles, opportunities, materials, llm_health_check, grants
+from routers import auth, documents, profiles, opportunities, materials, llm_health_check, grants, jobs
 
 # Setup logging
 setup_logging()
@@ -70,6 +70,7 @@ app.include_router(opportunities.router)
 app.include_router(materials.router)
 app.include_router(llm_health_check.router)
 app.include_router(grants.router)
+app.include_router(jobs.router)
 
 
 # --- Lifespan Events ---

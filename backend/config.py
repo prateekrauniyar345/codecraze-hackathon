@@ -52,6 +52,28 @@ class Settings(BaseSettings):
             return v
         return os.getenv("SIMPLE_GRANTS") or None
 
+    # Adzuna Job Search API
+    ADZUNA_APP_ID: Optional[str] = Field(
+        default=None,
+        env="ADZUNA_APP_ID",
+    )
+    ADZUNA_APP_KEY: Optional[str] = Field(
+        default=None,
+        env="ADZUNA_APP_KEY",
+    )
+    ADZUNA_BASE_URL: Optional[str] = Field(
+        default=None,
+        env="ADZUNA_BASE_URL",
+    )
+    ADZUNA_TIMEOUT: float = Field(
+        default=20.0,
+        env="ADZUNA_TIMEOUT",
+    )
+    ADZUNA_MAX_RETRIES: int = Field(
+        default=3,
+        env="ADZUNA_MAX_RETRIES",
+    )
+
     # ────────────── LLM configuration ──────────────
     LLM_MODEL: str = Field(
         default="openai/gpt-oss-120b",
