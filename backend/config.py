@@ -21,6 +21,13 @@ class Settings(BaseSettings):
         extra="ignore",  # <- avoid errors for env vars we don't explicitly model
     )
 
+    # ────────────── OAuth ──────────────
+    OAUTH_DOMAIN: str = Field(..., env="OAUTH_DOMAIN")
+    OAUTH_CLIENT_ID: str = Field(..., env="OAUTH_CLIENT_ID")
+    OAUTH_CLIENT_SECRET: str = Field(..., env="OAUTH_CLIENT_SECRET")
+    OAUTH_AUTHORIZE_URL: str = Field(..., env="OAUTH_AUTHORIZE_URL")
+    OAUTH_TOKEN_URL: str = Field(..., env="OAUTH_TOKEN_URL") or None
+
     # ────────────── Database ──────────────
     DATABASE_URL: str = Field(
         default="postgresql://postgres:hB7fhr,4ds;v@localhost:5432/scholarsense",

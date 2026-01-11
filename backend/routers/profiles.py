@@ -9,7 +9,7 @@ from models.user import User
 from models.profile import Profile
 from models.document import DocumentText
 from schemas.profile import ProfileCreate, ProfileUpdate, ProfileResponse
-from utils.auth import get_current_user
+from services.auth_services import get_current_user
 
 router = APIRouter(prefix="/profiles", tags=["Profiles"])
 

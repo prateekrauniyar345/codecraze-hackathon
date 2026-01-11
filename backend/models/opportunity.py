@@ -40,18 +40,18 @@ class Opportunity(Base):
     fit_score = Column(Integer, CheckConstraint('fit_score >= 0 AND fit_score <= 100'))
     fit_analysis = Column(JSONB)
     status = Column(Enum(OpportunityStatus), default=OpportunityStatus.TO_APPLY)
-    type = Column(Enum(OpportunityType), default=OpportunityType.FULL_TIME)
+    # type = Column(Enum(OpportunityType), default=OpportunityType.FULL_TIME)
     deadline = Column(Date)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
-    # Relationships
+    # Relationships 
     user = relationship("User", back_populates="opportunities")
     requirements = relationship("OpportunityRequirement", back_populates="opportunity", cascade="all, delete-orphan")
     generated_materials = relationship("GeneratedMaterial", back_populates="opportunity", cascade="all, delete-orphan")
     
     def __repr__(self):
-        return f"<Opportunity(id={self.id}, title='{self.title}')>"
+        return f"<Opportunity(id={self.id})>"
 
 
 class OpportunityRequirement(Base):
@@ -66,8 +66,8 @@ class OpportunityRequirement(Base):
     is_mandatory = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
-    # Relationships
+    # Relationships 
     opportunity = relationship("Opportunity", back_populates="requirements")
     
     def __repr__(self):
-        return f"<OpportunityRequirement(id={self.id}, opportunity_id={self.opportunity_id})>"
+        return f"<OpportunityRequirement(id={self.id})>"

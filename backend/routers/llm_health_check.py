@@ -4,7 +4,7 @@ import time
 from fastapi import APIRouter, status, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from services.llm_client import llm_client
-from utils.auth import get_current_user
+from services.auth_services import get_current_user
 from models.user import User
 
 router = APIRouter(prefix="/llm", tags=["LLM Health Check"])

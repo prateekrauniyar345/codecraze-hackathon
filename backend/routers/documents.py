@@ -10,7 +10,7 @@ from models.document import Document, DocumentText
 from models.profile import Profile
 from schemas.document import DocumentResponse, DocumentTextResponse
 from services.llm_service import llm_service
-from utils.auth import get_current_user
+from services.auth_services import get_current_user
 from utils.file_utils import (
     validate_file,
     save_upload_file,

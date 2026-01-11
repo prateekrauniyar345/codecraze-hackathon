@@ -24,13 +24,13 @@ class GeneratedMaterial(Base):
     id = Column(Integer, primary_key=True, index=True)
     opportunity_id = Column(Integer, ForeignKey("opportunities.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    material_type = Column(Enum(MaterialType), nullable=False)
+    # material_type = Column(Enum(MaterialType), nullable=False)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
-    # Relationships
+    # Relationships (commented out)
     opportunity = relationship("Opportunity", back_populates="generated_materials")
     user = relationship("User", back_populates="generated_materials")
     
     def __repr__(self):
-        return f"<GeneratedMaterial(id={self.id}, type='{self.material_type}')>"
+        return f"<GeneratedMaterial(id={self.id})>"

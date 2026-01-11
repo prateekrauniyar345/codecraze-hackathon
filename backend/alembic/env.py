@@ -1,29 +1,25 @@
-# ensure backend package is importable when running from repo root
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.getcwd())
+
 from logging.config import fileConfig
+
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+
 from alembic import context
-# import settings and database models here to set target_metadata
-from config import get_settings
-from database import Base, engine
 
-# imoprt models to register them with Base
-import models.user
-import models.document
-import models.profile
-import models.opportunity
-import models.material
-
+# import teh models here for 'autogenerate' support
+from database import Base
+from models.user import User
+from models.document import Document, DocumentText
+from models.profile import Profile
+from models.opportunity import Opportunity, OpportunityRequirement, OpportunityStatus, OpportunityType
+from models.material import GeneratedMaterial, MaterialType
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-
-setting = get_settings()
-config.set_main_option("sqlalchemy.url", str(setting.DATABASE_URL))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -60,8 +56,6 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        compare_type=True,
-        compare_server_default=True,
     )
 
     with context.begin_transaction():
@@ -75,13 +69,17 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    with engine.connect() as connection:
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+
+    with connectable.connect() as connection:
         context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-            compare_type=True,
-            compare_server_default=True,
+            connection=connection, target_metadata=target_metadata
         )
+
         with context.begin_transaction():
             context.run_migrations()
 
@@ -90,3 +88,5 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
+
+

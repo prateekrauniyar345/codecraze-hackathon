@@ -1,7 +1,7 @@
 # routers/jobs.py
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from utils.auth import get_current_user
+from services.auth_services import get_current_user
 from database import get_db
 from models.profile import Profile
 from models.user import User

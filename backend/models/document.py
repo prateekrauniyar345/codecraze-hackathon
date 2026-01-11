@@ -26,15 +26,15 @@ class Document(Base):
     filename = Column(String(255), nullable=False)
     file_path = Column(String(512), nullable=False)
     file_size = Column(Integer)
-    doc_type = Column(
-                Enum(
-                    DocumentType,
-                    name="document_type",  
-                    values_callable=lambda x: [e.value for e in x],
-                ),
-                default=DocumentType.RESUME,
-            )
-    uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
+    # doc_type = Column(
+    #             Enum(
+    #                 DocumentType,
+    #                 name="document_type",  
+    #                 values_callable=lambda x: [e.value for e in x],
+    #             ),
+    #             default=DocumentType.RESUME,
+    #         )
+    # uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
     user = relationship("User", back_populates="documents")
@@ -42,7 +42,7 @@ class Document(Base):
     profiles = relationship("Profile", back_populates="document")
     
     def __repr__(self):
-        return f"<Document(id={self.id}, filename='{self.filename}')>"
+        return f"<Document(id={self.id})>"
 
 
 class DocumentText(Base):
@@ -60,4 +60,4 @@ class DocumentText(Base):
     document = relationship("Document", back_populates="document_texts")
     
     def __repr__(self):
-        return f"<DocumentText(id={self.id}, document_id={self.document_id})>"
+        return f"<DocumentText(id={self.id})>"

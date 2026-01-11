@@ -15,7 +15,7 @@ from schemas.opportunity import (
     OpportunityAnalysisRequest,
     OpportunityAnalysisResponse
 )
-from utils.auth import get_current_user
+from services.auth_services import get_current_user
 from services.llm_client import llm_client
 
 router = APIRouter(prefix="/opportunities", tags=["Opportunities"])

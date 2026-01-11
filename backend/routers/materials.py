@@ -10,7 +10,7 @@ from models.opportunity import Opportunity
 from models.profile import Profile
 from models.material import GeneratedMaterial, MaterialType
 from schemas.material import MaterialGenerateRequest, MaterialResponse
-from utils.auth import get_current_user
+from services.auth_services import get_current_user
 from services.llm_client import llm_client
 
 router = APIRouter(prefix="/materials", tags=["Materials"])
