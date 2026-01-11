@@ -17,67 +17,118 @@ from services.auth_services import (
     decode_access_token,
     security
 )
+from fastapi.requests import request, Request
+from services.oauth_client import oauth
+from services.auth_services import create_access_token
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 logger = logging.getLogger(__name__)
 
+# ----------------------------------------
+#  old registration and login endpoints 
+# ----------------------------------------
+# @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
+# async def register(user_data: UserCreate, db: Session = Depends(get_db)):
+#     """Register a new user."""
+#     existing_user = db.query(User).filter(User.email == user_data.email).first()
+#     if existing_user:
+#         logger.warning(f"Registration failed for existing email: {user_data.email}")
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="Email already registered"
+#         )
+    
+#     hashed_password = get_password_hash(user_data.password)
+#     new_user = User(
+#         email=user_data.email,
+#         hashed_password=hashed_password,
+#         full_name=user_data.full_name
+#     )
+    
+#     db.add(new_user)
+#     db.commit()
+#     db.refresh(new_user)
+    
+#     logger.info(f"User registered successfully: {new_user.email} (ID: {new_user.id})")
+    
+    
+#     # Create access token
+#     access_token = create_access_token(data={"sub": str(new_user.id)})
+    
+#     return Token(
+#         access_token=access_token,
+#         user=UserResponse.model_validate(new_user)
+#     )
 
-@router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreate, db: Session = Depends(get_db)):
-    """Register a new user."""
-    existing_user = db.query(User).filter(User.email == user_data.email).first()
-    if existing_user:
-        logger.warning(f"Registration failed for existing email: {user_data.email}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
+
+# @router.post("/login", response_model=Token)
+# async def login(credentials: UserLogin, db: Session = Depends(get_db)):
+#     """Login user and return JWT token."""
+#     user = authenticate_user(db, credentials.email, credentials.password)
     
-    hashed_password = get_password_hash(user_data.password)
-    new_user = User(
-        email=user_data.email,
-        hashed_password=hashed_password,
-        full_name=user_data.full_name
-    )
+#     if not user:
+#         logger.warning(f"Failed login attempt for email: {credentials.email}")
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail="Incorrect email or password",
+#             headers={"WWW-Authenticate": "Bearer"},
+#         )
     
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+#     # Create access token
+#     access_token = create_access_token(data={"sub": str(user.id)})
     
-    logger.info(f"User registered successfully: {new_user.email} (ID: {new_user.id})")
+#     logger.info(f"User logged in successfully: {user.email} (ID: {user.id})")
     
-    
-    # Create access token
-    access_token = create_access_token(data={"sub": str(new_user.id)})
-    
-    return Token(
-        access_token=access_token,
-        user=UserResponse.model_validate(new_user)
-    )
+#     return Token(
+#         access_token=access_token,
+#         user=UserResponse.model_validate(user)
+#     )
 
 
-@router.post("/login", response_model=Token)
-async def login(credentials: UserLogin, db: Session = Depends(get_db)):
-    """Login user and return JWT token."""
-    user = authenticate_user(db, credentials.email, credentials.password)
+# ----------------------------------------
+#  new login and registration endpoints
+# ----------------------------------------
+@router.get("/auth/login")
+async def oauth_login():
+    """OAuth login placeholder endpoint."""
+    logger.info("OAuth login endpoint accessed.")
+    redirect_uri = request.url_for("oauth_callback")
+    return await oauth.auth0.authorize_redirect(request, redirect_uri)
+
+@router.get("/auth/callback", name="oauth_callback")
+async def oauth_callback(request: Request, db=Depends(get_db)):
+    """OAuth callback endpoint to handle authentication response."""
+    logger.info("OAuth callback endpoint accessed.")
+    token = await oauth.auth0.authorize_access_token(request)
+    user_info = await oauth.auth0.parse_id_token(request, token)
+    
+    # Check if user exists in the database
+    user = db.query(User).filter(User.email == user_info["email"]).first()
     
     if not user:
-        logger.warning(f"Failed login attempt for email: {credentials.email}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
+        # Create new user if not exists
+        user = User(
+            email=user_info["email"],
+            full_name=user_info.get("name", ""),
+            hashed_password=""  # No password for OAuth users
         )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        logger.info(f"New OAuth user created: {user.email} (ID: {user.id})")
+    else:
+        logger.info(f"Existing OAuth user logged in: {user.email} (ID: {user.id})")
     
     # Create access token
     access_token = create_access_token(data={"sub": str(user.id)})
     
-    logger.info(f"User logged in successfully: {user.email} (ID: {user.id})")
-    
-    return Token(
-        access_token=access_token,
-        user=UserResponse.model_validate(user)
-    )
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": UserResponse.model_validate(user)
+    }
+
+
 
 
 @router.get("/me", response_model=UserResponse)

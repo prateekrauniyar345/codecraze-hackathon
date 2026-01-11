@@ -10,6 +10,7 @@ from .auth_services import (
     get_current_user, 
     authenticate_user
 )
+from .oauth_client import oauth
 
 __all__ = [
     "llm_client", 
@@ -21,5 +22,6 @@ __all__ = [
     "create_access_token",
     "decode_access_token",
     "get_current_user",
-    "authenticate_user"
+    "authenticate_user", 
+    "oauth"
     ]

@@ -12,25 +12,11 @@ from sqlalchemy.orm import Session
 from config import get_settings
 from database import get_db
 from models.user import User
-from authlib.integrations.starlette_client import OAuth
+
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
-
-
-oauth = OAuth()
-# Configure OAuth client 
-oauth.register(
-    name="google",  #we will use google as oauth provider
-    client_id = settings.OAUTH_CLIENT_ID,
-    client_secret = settings.OAUTH_CLIENT_SECRET,
-    authorize_url = settings.OAUTH_AUTHORIZE_URL,
-    access_token_url = settings.OAUTH_TOKEN_URL,
-    client_kwargs={
-        "scope": "openid profile email",
-    },
-)
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
