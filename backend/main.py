@@ -11,6 +11,7 @@ from config import get_settings
 from database import init_db
 from logging_config import setup_logging
 from routers import auth, documents, profiles, opportunities, materials, llm_health_check, grants, jobs
+from starlette.middleware.sessions import SessionMiddleware
 
 # Setup logging
 setup_logging()
@@ -28,6 +29,10 @@ app = FastAPI(
 )
 
 # --- Middleware ---
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=settings.SECRET_KEY
+)
 
 # Configure CORS
 app.add_middleware(

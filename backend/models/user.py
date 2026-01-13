@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text
 from sqlalchemy.sql import func
 from database import Base
+from sqlalchemy.orm import relationship
 
 class User(Base):
     __tablename__ = "users"
@@ -13,6 +14,13 @@ class User(Base):
     # picture = Column(Text, nullable=True) 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     last_login = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    
+    # Relationships (names must match back_populates used in other models)
+    documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
+    profiles = relationship("Profile", back_populates="user", cascade="all, delete-orphan")
+    opportunities = relationship("Opportunity", back_populates="user", cascade="all, delete-orphan")
+    generated_materials = relationship("GeneratedMaterial", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id})>"

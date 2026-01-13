@@ -17,10 +17,9 @@ from services.auth_services import (
     decode_access_token,
     security
 )
-from fastapi.requests import request, Request
+from fastapi.requests import Request
 from services.oauth_client import oauth
 from services.auth_services import create_access_token
-
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 logger = logging.getLogger(__name__)
 
@@ -88,19 +87,22 @@ logger = logging.getLogger(__name__)
 # ----------------------------------------
 #  new login and registration endpoints
 # ----------------------------------------
-@router.get("/auth/login")
-async def oauth_login():
+@router.get("/login")
+async def oauth_login(request: Request):
     """OAuth login placeholder endpoint."""
     logger.info("OAuth login endpoint accessed.")
     redirect_uri = request.url_for("oauth_callback")
     return await oauth.auth0.authorize_redirect(request, redirect_uri)
 
-@router.get("/auth/callback", name="oauth_callback")
+@router.get("/callback", name="oauth_callback")
 async def oauth_callback(request: Request, db=Depends(get_db)):
     """OAuth callback endpoint to handle authentication response."""
     logger.info("OAuth callback endpoint accessed.")
     token = await oauth.auth0.authorize_access_token(request)
-    user_info = await oauth.auth0.parse_id_token(request, token)
+    print("OAuth token received:", token)
+    # user_info = await oauth.auth0.parse_id_token(request, token)
+    user_info = token.get('userinfo')
+    print("User info received from Auth0:", user_info)
     
     # Check if user exists in the database
     user = db.query(User).filter(User.email == user_info["email"]).first()
@@ -110,7 +112,8 @@ async def oauth_callback(request: Request, db=Depends(get_db)):
         user = User(
             email=user_info["email"],
             full_name=user_info.get("name", ""),
-            hashed_password=""  # No password for OAuth users
+            
+            
         )
         db.add(user)
         db.commit()

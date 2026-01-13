@@ -18,25 +18,31 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      await login(email, password);
-      toast.success('Login successful!');
-      
-      // Small delay to ensure state updates propagate
-      setTimeout(() => {
-        navigate('/dashboard', { replace: true });
-      }, 100);
-    } catch (error) {
-      console.error('Login error:', error);
-      toast.error(error.response?.data?.detail || 'Login failed');
-    } finally {
-      setLoading(false);
-    }
+  // Navigate to backend to start OAuth
+  const handleOAuthLogin = () => {
+    console.log("Redirecting to Auth0...");
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/login`;
   };
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+
+  //   try {
+  //     await login(email, password);
+  //     toast.success('Login successful!');
+      
+  //     // Small delay to ensure state updates propagate
+  //     setTimeout(() => {
+  //       navigate('/dashboard', { replace: true });
+  //     }, 100);
+  //   } catch (error) {
+  //     console.error('Login error:', error);
+  //     toast.error(error.response?.data?.detail || 'Login failed');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
@@ -53,9 +59,9 @@ const Login = () => {
           </p>
         </div>
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6" onSubmit={(e) => e.preventDefault()}>
           <div className="rounded-md shadow-sm space-y-4">
-            <div>
+            {/* <div>
               <label htmlFor="email" className="sr-only">
                 Email address
               </label>
@@ -68,16 +74,16 @@ const Login = () => {
                   name="email"
                   type="email"
                   autoComplete="email"
-                  required
+                  // required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="input pl-10"
                   placeholder="Email address"
                 />
               </div>
-            </div>
+            </div> */}
             
-            <div>
+            {/* <div>
               <label htmlFor="password" className="sr-only">
                 Password
               </label>
@@ -90,23 +96,24 @@ const Login = () => {
                   name="password"
                   type="password"
                   autoComplete="current-password"
-                  required
+                  // required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="input pl-10"
                   placeholder="Password"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
 
           <div>
             <button
-              type="submit"
+              type="button"
               disabled={loading}
               className="btn btn-primary w-full"
+              onClick={handleOAuthLogin}
             >
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? 'Signing in...' : 'Sign in with Auth0'}
             </button>
           </div>
         </form>

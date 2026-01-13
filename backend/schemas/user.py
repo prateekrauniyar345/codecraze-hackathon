@@ -6,32 +6,47 @@ from datetime import datetime
 from typing import Optional
 
 
-class UserCreate(BaseModel):
-    """Schema for user registration."""
-    email: EmailStr
-    password: str = Field(..., min_length=8)
+class User(BaseModel):
+    '''
+    id : int primary key for the user table
+    oauth_id : str unique identifier from the OAuth provider
+    oauth_provider : str name of the OAuth provider (e.g., 'google', 'auth0')
+    full_name : Optional[str] full name of the user
+    email : EmailStr email address of the user
+    created_at : datetime timestamp when the user was created
+    last_login : datetime timestamp of the user's last login
+    '''
+    id: int
+    oauth_id: str
+    oauth_provider: str
     full_name: Optional[str] = None
-
-
-class UserLogin(BaseModel):
-    """Schema for user login."""
     email: EmailStr
-    password: str
+    created_at: datetime
+    last_login: datetime   
+
+
+class UserCreate(BaseModel):
+    """Schema for creating a new user."""
+    oauth_id: str
+    oauth_provider: str
+    full_name: Optional[str] = None
+    email: EmailStr 
+
+
+class UserUpdate(BaseModel):
+    """Schema for updating user information."""
+    full_name: Optional[str] = None
+    email: Optional[EmailStr] = None    
 
 
 class UserResponse(BaseModel):
     """Schema for user response."""
     id: int
-    email: str
+    oauth_id: str
+    oauth_provider: str
     full_name: Optional[str] = None
+    email: EmailStr
     created_at: datetime
-    
-    class Config:
-        from_attributes = True
+    last_login: datetime
 
 
-class Token(BaseModel):
-    """Schema for JWT token response."""
-    access_token: str
-    token_type: str = "bearer"
-    user: UserResponse

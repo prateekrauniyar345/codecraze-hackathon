@@ -45,34 +45,37 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
-  const login = async (email, password) => {
-    try {
-      const response = await authAPI.login({ email, password });
-      console.log("login responss is : ", response);
-      const { access_token, user: userData } = response.data;
+  // const login = async (email, password) => {
+  //   try {
+  //     const response = await authAPI.login({ email, password });
+  //     console.log("login responss is : ", response);
+  //     const { access_token, user: userData } = response.data;
       
-      console.log('Login successful for:', userData.email);
+  //     console.log('Login successful for:', userData.email);
       
-      if (access_token && userData) {
-        // CRITICAL: Set auth header BEFORE updating state
-        // This ensures subsequent API calls have the token
-        setAuthHeader(access_token);
-        localStorage.setItem('token', access_token);
-        localStorage.setItem('user', JSON.stringify(userData));
+  //     if (access_token && userData) {
+  //       // CRITICAL: Set auth header BEFORE updating state
+  //       // This ensures subsequent API calls have the token
+  //       setAuthHeader(access_token);
+  //       localStorage.setItem('token', access_token);
+  //       localStorage.setItem('user', JSON.stringify(userData));
         
-        // Set user state last
-        setUser(userData);
+  //       // Set user state last
+  //       setUser(userData);
         
-        return userData;
-      } else {
-        console.error("Login response missing token or user data", response.data);
-        throw new Error("Login failed: Invalid response from server.");
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
-    }
-  };
+  //       return userData;
+  //     } else {
+  //       console.error("Login response missing token or user data", response.data);
+  //       throw new Error("Login failed: Invalid response from server.");
+  //     }
+  //   } catch (error) {
+  //     console.error('Login error:', error);
+  //     throw error;
+  //   }
+  // };
+  const login  = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/login`;
+  }
 
   const register = async (email, password, fullName) => {
     const response = await authAPI.register({

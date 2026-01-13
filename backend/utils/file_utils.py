@@ -10,7 +10,6 @@ from fastapi import UploadFile, HTTPException
 from config import get_settings
 
 settings = get_settings()
-print("\n\nall the settings", settings )
 print("\n\n")
 
 
