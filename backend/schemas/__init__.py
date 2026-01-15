@@ -1,7 +1,7 @@
 """
 Pydantic schemas for request/response validation.
 """
-from .user import UserCreate, UserLogin, UserResponse, Token
+from .user import User, UserCreate, UserUpdate, UserResponse
 from .document import DocumentUpload, DocumentResponse, DocumentTextResponse
 from .profile import ProfileCreate, ProfileUpdate, ProfileResponse
 from .opportunity import (
@@ -39,10 +39,10 @@ from .grants import (
 
 
 __all__ = [
+    "User",
     "UserCreate",
-    "UserLogin",
+    "UserUpdate",
     "UserResponse",
-    "Token",
     "DocumentUpload",
     "DocumentResponse",
     "DocumentTextResponse",
