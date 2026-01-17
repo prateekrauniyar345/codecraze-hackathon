@@ -11,7 +11,6 @@ class User(Base):
     oauth_provider = Column(String(50), nullable=False) # 'google', 'auth0', etc.
     full_name = Column(String(255))
     email = Column(String(255), unique=True, nullable=False, index=True)
-    # picture = Column(Text, nullable=True) 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     last_login = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

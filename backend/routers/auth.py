@@ -8,7 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User
-from schemas.user import User, UserCreate, UserResponse, UserUpdate
+from schemas.user import UserCreate, UserResponse, UserUpdate
 from services.auth_services import (
     get_password_hash,
     authenticate_user,
@@ -110,10 +110,10 @@ async def oauth_callback(request: Request, db=Depends(get_db)):
     if not user:
         # Create new user if not exists
         user = User(
-            email=user_info["email"],
+            oauth_id=user_info["sub"], 
+            oauth_provider="auth0",
             full_name=user_info.get("name", ""),
-            
-            
+            email=user_info["email"],
         )
         db.add(user)
         db.commit()

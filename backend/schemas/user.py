@@ -49,4 +49,8 @@ class UserResponse(BaseModel):
     created_at: datetime
     last_login: datetime
 
+    class Config:
+        # This is the magic line that fixes your error
+        from_attributes = True
+
 

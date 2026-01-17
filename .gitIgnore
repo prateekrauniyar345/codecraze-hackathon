@@ -45,3 +45,7 @@ temp*
 
 # alembic file
 *.ini
+
+
+# ignore the tldr files
+*.tldr
