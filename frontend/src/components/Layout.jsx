@@ -25,12 +25,12 @@ const Layout = () => {
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-100 mx-auto px-0 sm:px-6 lg:px-4 border border-primary">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <FiFileText className="h-8 w-8 text-primary-600 mr-2" />
               <span className="text-xl font-bold text-gray-900 dark:text-white">
-                ScholarSense
+                ScholarSensess
               </span>
             </div>
             
