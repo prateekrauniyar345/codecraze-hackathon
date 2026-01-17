@@ -4,6 +4,8 @@ Authentication router for user registration and login.
 import logging
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import RedirectResponse
+from fastapi import Response
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from database import get_db
@@ -20,68 +22,16 @@ from services.auth_services import (
 from fastapi.requests import Request
 from services.oauth_client import oauth
 from services.auth_services import create_access_token
+import os
+from dotenv import load_dotenv
+
+# load the env file
+load_dotenv()
+
+
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 logger = logging.getLogger(__name__)
 
-# ----------------------------------------
-#  old registration and login endpoints 
-# ----------------------------------------
-# @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
-# async def register(user_data: UserCreate, db: Session = Depends(get_db)):
-#     """Register a new user."""
-#     existing_user = db.query(User).filter(User.email == user_data.email).first()
-#     if existing_user:
-#         logger.warning(f"Registration failed for existing email: {user_data.email}")
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="Email already registered"
-#         )
-    
-#     hashed_password = get_password_hash(user_data.password)
-#     new_user = User(
-#         email=user_data.email,
-#         hashed_password=hashed_password,
-#         full_name=user_data.full_name
-#     )
-    
-#     db.add(new_user)
-#     db.commit()
-#     db.refresh(new_user)
-    
-#     logger.info(f"User registered successfully: {new_user.email} (ID: {new_user.id})")
-    
-    
-#     # Create access token
-#     access_token = create_access_token(data={"sub": str(new_user.id)})
-    
-#     return Token(
-#         access_token=access_token,
-#         user=UserResponse.model_validate(new_user)
-#     )
-
-
-# @router.post("/login", response_model=Token)
-# async def login(credentials: UserLogin, db: Session = Depends(get_db)):
-#     """Login user and return JWT token."""
-#     user = authenticate_user(db, credentials.email, credentials.password)
-    
-#     if not user:
-#         logger.warning(f"Failed login attempt for email: {credentials.email}")
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Incorrect email or password",
-#             headers={"WWW-Authenticate": "Bearer"},
-#         )
-    
-#     # Create access token
-#     access_token = create_access_token(data={"sub": str(user.id)})
-    
-#     logger.info(f"User logged in successfully: {user.email} (ID: {user.id})")
-    
-#     return Token(
-#         access_token=access_token,
-#         user=UserResponse.model_validate(user)
-#     )
 
 
 # ----------------------------------------
@@ -99,10 +49,10 @@ async def oauth_callback(request: Request, db=Depends(get_db)):
     """OAuth callback endpoint to handle authentication response."""
     logger.info("OAuth callback endpoint accessed.")
     token = await oauth.auth0.authorize_access_token(request)
-    print("OAuth token received:", token)
+    # print("OAuth token received:", token)
     # user_info = await oauth.auth0.parse_id_token(request, token)
     user_info = token.get('userinfo')
-    print("User info received from Auth0:", user_info)
+    # print("User info received from Auth0:", user_info)
     
     # Check if user exists in the database
     user = db.query(User).filter(User.email == user_info["email"]).first()
@@ -122,15 +72,28 @@ async def oauth_callback(request: Request, db=Depends(get_db)):
     else:
         logger.info(f"Existing OAuth user logged in: {user.email} (ID: {user.id})")
     
-    # Create access token
-    access_token = create_access_token(data={"sub": str(user.id)})
+    # Create YOUR OWN App Access Token (JWT)
+    # This is the 'Passport' your app uses from now on
+    app_access_token = create_access_token(data={"sub": str(user.id)})
     
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": UserResponse.model_validate(user)
-    }
-
+    # Redirect to Frontend with the Token
+    frontend_url = os.getenv("FRONTEND_REDIRECT_URL", "http://localhost:5173/dashboard")
+    
+    # We attach the token to the URL so the React/Vue app can grab it
+    redirect_url = f"{frontend_url}?token={app_access_token}"
+    response = RedirectResponse(url=redirect_url)
+    
+    # set the web cookie 
+    response.set_cookie(
+        key="access_token", 
+        value=f"Bearer {app_access_token}",
+        httponly=True, 
+        max_age=3600,  # 1 hour
+        expires=3600,   # 1 hour expiration
+        samesite="lax", # helps prevent CSRF attacks
+        secure=False    # set to True in production with HTTPS
+    )
+    return response
 
 
 

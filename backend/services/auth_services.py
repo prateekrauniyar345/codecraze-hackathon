@@ -11,6 +11,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from config import get_settings
 from database import get_db
+from fastapi import Request
 from models.user import User
 
 
@@ -55,6 +56,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+    print("encoded_jwt:", encoded_jwt)
     
     return encoded_jwt
 
@@ -89,7 +92,8 @@ def decode_access_token(token: str) -> dict:
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    # credentials: HTTPAuthorizationCredentials = Depends(security),
+    request: Request, 
     db: Session = Depends(get_db)
 ) -> User:
     """
@@ -105,39 +109,45 @@ async def get_current_user(
     Raises:
         HTTPException: If authentication fails
     """
-    token = credentials.credentials
+    token_coockie = request.cookies.get("access_token")
+
+    if not token_coockie:
+        logger.warning("No access token cookie found in request.")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # remove the Bearer prefix if present
+    token = token_coockie.removeprefix("Bearer ").strip()
+
     try:
         payload = decode_access_token(token)
-        
-        user_id: int = payload.get("sub")
+        user_id: str = payload.get("sub")
         if user_id is None:
-            logger.warning("Token payload missing 'sub' claim.")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token payload",
+                detail="Could not validate credentials (missing subject)",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        
-        user = db.query(User).filter(User.id == user_id).first()
+        user = db.query(User).filter(User.id == int(user_id)).first()
         if user is None:
-            logger.warning(f"User with ID '{user_id}' from token not found in database.")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        
         return user
-    except HTTPException as e:
-        # Re-raise HTTPExceptions to preserve their status code and detail
-        raise e
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"An unexpected error occurred in get_current_user: {e}", exc_info=True)
+        logger.error(f"Error retrieving current user: {e}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while authenticating.",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        )       
 
 
 def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:

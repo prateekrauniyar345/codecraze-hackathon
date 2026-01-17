@@ -1,86 +1,47 @@
+// frontend/src/api/client.js
 import axios from 'axios';
-
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  // Don't set default Content-Type - let axios handle it automatically
-  // JSON requests will get application/json, FormData will get multipart/form-data
+  // CRITICAL: This allows the browser to send the HttpOnly cookie automatically
+  withCredentials: true, 
 });
 
+// We no longer need setAuthHeader because the browser handles the cookie.
+export const setAuthHeader = () => {}; 
 
-
-export const setAuthHeader = (token) => {
-  if (token) {
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    console.log('Auth header set with token:', token.substring(0, 20) + '...');
-  } else {
-    delete api.defaults.headers.common['Authorization'];
-    console.log('Auth header cleared');
-  }
-};
-
-// Add request interceptor to attach token from localStorage
+// Simplified request interceptor
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    console.log("token in client.js is : ", token);
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log('Request interceptor: Adding token to', config.url);
-    } else {
-      console.log('Request interceptor: No token found for', config.url);
-    }
-    
-    // Set Content-Type to application/json for non-FormData requests
+    // Only set Content-Type if it's not FormData
     if (!(config.data instanceof FormData)) {
       config.headers['Content-Type'] = 'application/json';
     }
-    // For FormData, axios will automatically set Content-Type with boundary
-    
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Handle auth errors
+// Updated Response Interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.error('401 Unauthorized error:', error.config?.url);
-      
-      // Don't redirect on auth endpoints
-      if (error.config?.url?.includes('/auth/login') || 
-          error.config?.url?.includes('/auth/register')) {
-        return Promise.reject(error);
-      }
-      
-      console.warn('Redirecting to login due to 401 error');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      setAuthHeader(null);
-      
-      // Use a slight delay to prevent race conditions
-      setTimeout(() => {
+      // If we get a 401, the session/cookie is invalid
+      // Only redirect if we aren't already on the login page
+      if (window.location.pathname !== '/login') {
         window.location.href = '/login';
-      }, 100);
+      }
     }
     return Promise.reject(error);
   }
 );
 
-// Auth endpoints
 export const authAPI = {
-  register: (data) => api.post('/auth/register', data),
-  login: (data) => api.post('/auth/login', data),
-  getMe: () => {
-    console.log("authAPI.getMe() called. Call stack follows:");
-    console.trace();
-    return api.get('/auth/me');
-  },
+  // No register/login here if you are using the OAuth Redirect flow
+  getMe: () => api.get('/auth/me'),
+  logout: () => api.post('/auth/logout'), // Important: call backend to clear cookie
 };
 
 // Documents endpoints
